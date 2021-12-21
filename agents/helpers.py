@@ -1,4 +1,5 @@
 ### CODE BY EMIL BALITZKI ###
+import random
 from enum import Enum
 from typing import Callable, Tuple, Optional
 
@@ -96,3 +97,25 @@ def get_rival_piece(player: BoardPiece):
     :return: rival_piece
     """
     return PLAYER2 if player == PLAYER1 else PLAYER1
+
+
+def calculate_possible_moves(board: np.ndarray) -> list[PlayerAction]:
+    """
+    Generates the list of all moves, for which the columns are not full.
+
+    :param board: the board from which the list will be generated
+    :return: list_of_moves containing values of type PlayerAction
+    """
+    # Always put the middle column first
+    columns_order = [3]
+    # Then other columns in the order of how far they are from the middle (randomness for the same distance)
+    for distance in [1, 2, 3]:
+        temp_order = [3 - distance, 3 + distance]
+        random.shuffle(temp_order)
+        columns_order.extend(temp_order)
+    # Check if the columns are not full
+    possible_moves = []
+    for column_number in columns_order:
+        if board[0][column_number] == NO_PLAYER:
+            possible_moves.append(np.int8(column_number))
+    return possible_moves

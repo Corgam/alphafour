@@ -1,12 +1,13 @@
-import torch
 from typing import Optional, Tuple
 import numpy as np
-from agents.agent_alphafour.neural import AlphaNet, createNeuralBoard
-from agents.common import string_to_board
 
-from agents.helpers import SavedState, PlayerAction, BoardPiece, NO_PLAYER
+from agents.agent_alphafour.mcts import Node, select_the_best_move
+
+from agents.helpers import SavedState, PlayerAction, BoardPiece
+
 
 def generate_move_alphafour(
         board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState]
 ) -> Tuple[PlayerAction, Optional[SavedState]]:
-        return 0
+    rootNode = Node(board, player)
+    return select_the_best_move(rootNode), saved_state

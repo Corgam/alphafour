@@ -6,6 +6,9 @@ from agents.helpers import PLAYER1, PLAYER2, BoardPiece
 
 NOF_RESIDUAL_LAYERS = 19
 
+#
+INPUT_SIZE = 3
+
 # Convolutional Layer Constants
 CONV_OUTPUTS = 128
 CONV_INPUTS = 3
@@ -78,16 +81,16 @@ def createNeuralBoard(board: np.ndarray, player: BoardPiece = PLAYER1):
     First and second dimensions will store 1s where there is a piece of the first and second player respectively.
     The last third dimenstion, will be filled with value of the next player to move: 1 or 2. 
     '''
-    neuralBoard = np.zeros([6, 7, 3]).astype(int)
+    neuralBoard = np.zeros([3, 6, 7]).astype(int)
     # Move the values from the board
     for row in range(6):
         for col in range(7):
             # First player
             if board[row][col] == PLAYER1:
-                neuralBoard[row][col][0] = 1
+                neuralBoard[0][row][col] = 1
             # Second player
             elif board[row][col] == PLAYER2:
-                neuralBoard[row][col][1] = 1
+                neuralBoard[1][row][col] = 1
     # Set the player to move
-    neuralBoard[:][:][2] = player
+    neuralBoard[2][:][:] = player
     return neuralBoard
