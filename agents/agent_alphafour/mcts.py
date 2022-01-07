@@ -7,7 +7,7 @@ import numpy as np
 from agents.common import apply_player_action, if_game_ended, check_end_state
 from agents.helpers import calculate_possible_moves, get_rival_piece, PlayerAction, GameState
 
-NOF_SIMULATIONS = 100  # Number of simulations to run
+NOF_SIMULATIONS = 1000  # Number of simulations to run
 
 
 class Node:
@@ -61,7 +61,7 @@ class Node:
         while not if_game_ended(board):
             possible_moves = calculate_possible_moves(board)
             selected_move = rollout_policy(possible_moves)
-            board = apply_player_action(board, selected_move, nextPlayer)
+            apply_player_action(board, selected_move, nextPlayer)
             nextPlayer = get_rival_piece(nextPlayer)
         return check_end_state(board, self.next_player)
 
@@ -122,12 +122,23 @@ def tree_policy(node: Node) -> Node:
 def rollout_policy(possible_moves: list[PlayerAction]):
     """
     Selects the next move from possible moves based on the rollout policy.
+    For now, it selects it randomly, preferring columns closer to the middle.
+    TODO: Implement neural Network choice
     :param possible_moves:
     :return:
     """
-    # TODO: Select which move to do next (possible NN should do it)
-    # For now the moves are selected randomly.
-    return random.choice(possible_moves)
+    assert len(possible_moves) != 0
+    # Generate the temporary list, starting from the middle
+    columns_order = [3]
+    # Then other columns in the order of how far they are from the middle (randomness for the same distance)
+    for distance in [1, 2, 3]:
+        temp_order = [3 - distance, 3 + distance]
+        random.shuffle(temp_order)
+        columns_order.extend(temp_order)
+    # Select the column which is the closest to the middle
+    for column_number in columns_order:
+        if possible_moves.count(np.int8(column_number)):
+            return np.int8(column_number)
 
 
 def select_the_best_move(node: Node):
@@ -136,8 +147,13 @@ def select_the_best_move(node: Node):
     :param node: the root node
     :return: best_action
     """
+    # Run the simulation many times to improve the outcome
     for i in range(NOF_SIMULATIONS):
+        # 1. Select the node
         v = tree_policy(node)
+        # 2. Rollout the node (play until the game has finished)
         reward = v.rollout()
+        # 3. Backpropagate the result up the tree
         v.backpropagate(reward)
+    # After all simulations, return the best possibility for a move.
     return node.get_best_child().parent_move
