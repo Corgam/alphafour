@@ -1,13 +1,11 @@
-import math
 import random
 from typing import List
-
 import numpy as np
 
 from agents.common import apply_player_action, if_game_ended, check_end_state
 from agents.helpers import calculate_possible_moves, get_rival_piece, PlayerAction, GameState
 
-NOF_SIMULATIONS = 1000  # Number of simulations to run
+NOF_SIMULATIONS = 100  # Number of simulations to run
 
 
 class Node:
@@ -17,7 +15,7 @@ class Node:
         self.next_player = next_player  # The player who will move next
         self.parent_move: PlayerAction = parent_move  # Move which the parent carried out
         self.children: List[Node] = []  # Set of all possible children
-        self.visitCount: int = 0  # How many times this node has been visited
+        self.visit_count: int = 0  # How many times this node has been visited
         self.wins: int = 0  #
         self.losses: int = 0  #
         # List of all moves which were not expanded.
@@ -65,45 +63,30 @@ class Node:
             nextPlayer = get_rival_piece(nextPlayer)
         return check_end_state(board, self.next_player)
 
-    def backpropagate(self, result):
+    def backpropagate(self, reward):
         """
         Backpropagates the result from the node itself up the the root.
-        :param result: the result to backpropagate
+        :param reward: the result to backpropagate
         """
-        self.visitCount += 1
+        self.visit_count += 1
         # Add the result to the appropriate counter
-        if result == GameState.IS_WIN:
+        if reward == GameState.IS_WIN:
             self.wins += 1
-        elif result == GameState.IS_LOST:
+        elif reward == GameState.IS_LOST:
             self.losses += 1
         # Call it in each parent, till at the root.
         if self.parent is not None:
-            self.parent.backpropagate(result)
+            self.parent.backpropagate(reward)
 
-    def get_best_child(self):
+    def get_best_child(self, exploration_param=0.1):
         """
         Returns child node with highest UCT value
         :return:
         """
-        maxUCT = -math.inf
-        bestChild = None
-        for child in self.children:
-            if calculateUCT(child) > maxUCT:
-                maxUCT = calculateUCT(child)
-                bestChild = child
-        return bestChild
-
-
-def calculateUCT(node: Node, exploration_param=math.sqrt(2)):
-    """
-    Calculates the UCT (Upper Confidence Bound) of a node.
-    :param exploration_param:
-    :param node:
-    :return: UCT_score
-    """
-    exploitation_score = node.wins / node.visitCount
-    exploration_score = exploration_param * math.sqrt((math.log(node.visitCount)) / node.visitCount)
-    return exploitation_score + exploration_score
+        childrenUCT = [((child.wins - child.losses) / child.visit_count) + exploration_param * np.sqrt(
+            2 * np.log(self.visit_count) / child.visit_count) for child in self.children]
+        bestChildID = np.argmax(childrenUCT)
+        return self.children[bestChildID]
 
 
 def tree_policy(node: Node) -> Node:
@@ -141,19 +124,19 @@ def rollout_policy(possible_moves: list[PlayerAction]):
             return np.int8(column_number)
 
 
-def select_the_best_move(node: Node):
+def select_the_best_move(rootNode: Node):
     """
     Selects the best action for the given root node.
-    :param node: the root node
+    :param rootNode: the root node
     :return: best_action
     """
     # Run the simulation many times to improve the outcome
     for i in range(NOF_SIMULATIONS):
         # 1. Select the node
-        v = tree_policy(node)
+        v = tree_policy(rootNode)
         # 2. Rollout the node (play until the game has finished)
         reward = v.rollout()
         # 3. Backpropagate the result up the tree
         v.backpropagate(reward)
     # After all simulations, return the best possibility for a move.
-    return node.get_best_child().parent_move
+    return rootNode.get_best_child().parent_move
