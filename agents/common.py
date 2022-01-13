@@ -3,7 +3,7 @@ from typing import Optional
 import numpy as np
 from numba import njit
 
-from agents.helpers import convert_print2number, convert_number2print
+from agents.helpers import convert_print2number, convert_number2print, get_rival_piece
 from agents.helpers import NO_PLAYER, PLAYER1, PLAYER2
 from agents.helpers import BoardPiece, PlayerAction, GameState
 
@@ -223,16 +223,11 @@ def check_end_state(
     # If given player has connected four, game is won.
     if connected_four(board, player, last_action):
         return GameState.IS_WIN
-    # If no player won the game and there is at least one free space, game is still playing
-    elif (not connected_four(board, PLAYER1, last_action)) and (not connected_four(board, PLAYER2, last_action)) \
-            and (np.any(board == NO_PLAYER)):
-        return GameState.STILL_PLAYING
     # If nobody won and there are no spaces left, game is draw.
-    elif np.all(board != NO_PLAYER):
+    if np.all(board != NO_PLAYER):
         return GameState.IS_DRAW
-    # If rival won
-    else:
-        return GameState.IS_LOST
+
+    return GameState.STILL_PLAYING
 
 
 def if_game_ended(board: np.ndarray, last_action: Optional[PlayerAction] = None) -> bool:

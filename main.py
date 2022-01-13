@@ -5,6 +5,7 @@ from agents.common import PlayerAction, BoardPiece
 from agents.helpers import SavedState, GenMove
 from agents.agent_alphafour import generate_move_alphafour
 
+
 # Read the keyboard input for user move
 def user_move(board: np.ndarray, _player: BoardPiece, saved_state: Optional[SavedState]):
     action = PlayerAction(-1)
