@@ -158,8 +158,8 @@ def expand(node: Node, state: Connect4State):
 def rollout(state: Connect4State):
     """
     Rollouts the state, until the game is ended.
-    :param state:
-    :return:
+    :param state: current state
+    :return: state_after_rollout
     """
     while not if_game_ended(state.board):
         state.move(random.choice(state.get_possible_moves()))
@@ -167,6 +167,11 @@ def rollout(state: Connect4State):
 
 
 def backpropagate(node: Node, state: Connect4State):
+    """
+    Backpropagates the value up the tree
+    :param node: node to start backpropagation from
+    :param state: current state
+    """
     while node is not None:
         node.backpropagate(state.get_reward(node.player_just_moved))
         node = node.parent
