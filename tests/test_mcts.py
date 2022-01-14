@@ -1,21 +1,20 @@
-from agents.agent_alphafour.mcts import Node, select_the_best_move
+from agents.agent_alphafour.mcts import Connect4State, run_MCTS
 from agents.common import string_to_board
 from agents.helpers import PLAYER1
 
 
 def test_MCTS():
-    # TODO: Fix
     board = string_to_board("""
         |==============|
         |    X         |
         |    O         |
-        |    X X       |
-        |    O X X     |
-        |  O X O O     |
-        |  O O X X     |
+        |    X         |
+        |    O   O     |
+        |    X   O     |
+        |    X X O     |
         |==============|
         |0 1 2 3 4 5 6 |
         """)
-    rootNode = Node(board, PLAYER1)
-    best_move = select_the_best_move(rootNode)
-    print(best_move)
+    root_state = Connect4State(board, PLAYER1)
+    move = run_MCTS(root_state, 100)
+    assert move == 4

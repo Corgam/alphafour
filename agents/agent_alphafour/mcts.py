@@ -1,112 +1,116 @@
+from __future__ import annotations  # Used for type hinting of class inside of itself
+
 import random
 from typing import List
 import numpy as np
 
-from agents.common import apply_player_action, if_game_ended, check_end_state
-from agents.helpers import calculate_possible_moves, get_rival_piece, PlayerAction, GameState
+from agents.common import apply_player_action, if_game_ended, check_end_state, initialize_game_state, pretty_print_board
+from agents.helpers import calculate_possible_moves, get_rival_piece, PlayerAction, GameState, PLAYER1, BoardPiece
 
-NOF_SIMULATIONS = 100  # Number of simulations to run
+
+class Connect4State:
+    """
+    Class for state of the connect four game.
+    Holds information about the board and the last player who played.
+    """
+
+    def __init__(self, board=initialize_game_state(), player=PLAYER1):
+        self.player_just_moved = get_rival_piece(player)  # Player who moved last.
+        self.board = board  # The board itself
+
+    def copy(self) -> Connect4State:
+        """
+        Return a copy of the connect four state
+        :return: copy_of_state
+        """
+        copy = Connect4State()
+        copy.board = self.board.copy()
+        copy.player_just_moved = self.player_just_moved
+        return copy
+
+    def move(self, move: PlayerAction):
+        """
+        Makes a specified move on the board. Player which move will be made is a rival of self.playerJustMoved
+        :param move: move to do
+        :return:
+        """
+        apply_player_action(self.board, move, get_rival_piece(self.player_just_moved))
+        self.player_just_moved = get_rival_piece(self.player_just_moved)
+
+    def get_possible_moves(self) -> list[PlayerAction]:
+        """
+        Returns a list of possible moves (not full columns) from the board.
+        :return: list_of_possible_moves
+        """
+        return calculate_possible_moves(self.board)
+
+    def get_reward(self, player: BoardPiece) -> GameState:
+        """
+        Returns a GameState object, symbolizing if given player has won or not.
+        :return:
+        """
+        return check_end_state(self.board, player)
+
+    def __repr__(self):
+        """
+        String representation of the Connect 4 State
+        :return:
+        """
+        return pretty_print_board(self.board)
 
 
 class Node:
-    def __init__(self, board, next_player, parent=None, parent_move=None):
-        self.board: np.ndarray = board  # State of connect 4 board
-        self.parent: Node = parent  # Parent node
-        self.next_player = next_player  # The player who will move next
+    """
+    A node class for MCTS. It is used to store information about:
+    the state , move of the parent, parent node, list of child nodes, number of wins,
+    number of visits, list of untried moves and which player just moved.
+    """
+
+    def __init__(self, state: Connect4State = None, parent_move: PlayerAction = None, parent: Node = None):
         self.parent_move: PlayerAction = parent_move  # Move which the parent carried out
+        self.parent = parent  # Node of the parent. None if self is a root node.
         self.children: List[Node] = []  # Set of all possible children
-        self.visit_count: int = 0  # How many times this node has been visited
-        self.wins: int = 0  #
-        self.losses: int = 0  #
-        # List of all moves which were not expanded.
-        self.untriedMoves: list[PlayerAction] = calculate_possible_moves(board)
+        self.visits: int = 0  # How many times this node has been visited
+        self.wins: int = 0  # How many times this node has won
+        self.untried_moves: list[
+            PlayerAction] = state.get_possible_moves()  # List of all moves possible from that node.
+        self.player_just_moved = state.player_just_moved  # Player number who just moved
 
-    def is_terminal(self):
+    def add_child(self, move: PlayerAction, state: Connect4State) -> Node:
         """
-        Return if the node is a leaf, terminal node with finished game as a board state.
-        :return: if_terminal
+        Adds a child to the children list and deletes one move from list of untried moves.
+        :param move: move which leads to the child
+        :param state: connect 4 state
+        :return: created_child
         """
-        return if_game_ended(self.board)
+        child = Node(state, move, self)
+        self.untried_moves.remove(move)
+        self.children.append(child)
+        return child
 
-    def expand(self):
+    def select_best_child(self) -> Node:
         """
-        Expands the node once, if not fully expanded.
+        Calculates the UCB1 for each of the children and returns the child with the biggest UCB1.
+        https://cs.stackexchange.com/questions/113473/difference-between-ucb1-and-uct
+        :return: child_with_biggest_UCB1
         """
-        if not self.is_fully_expanded():
-            move = self.untriedMoves.pop(0)  # Get the first move from the list
-            next_board = apply_player_action(self.board, move, self.next_player, True)
-            new_child = Node(next_board, get_rival_piece(self.next_player), self, move)
-            self.children.append(new_child)
-            return new_child
-        else:
-            return None
+        UCTs = [child.wins / child.visits + np.sqrt(2 * np.log(self.visits) / child.visits) for child in self.children]
+        return self.children[np.argmax(UCTs)]
 
-    def is_fully_expanded(self):
+    def backpropagate(self, result: GameState):
         """
-        Returns if the node has been fully expanded.
-        :return: if_fully_expanded
+        Used for backpropagation. Updates the number of visits and wins.
+        :param result: the GameState to backpropagate
         """
-        return len(self.untriedMoves) == 0
-
-    def rollout(self) -> GameState:
-        """
-        Plays the board till there is an outcome for the game.
-        Returns the game state of the final board.
-        :return:
-        """
-        board = self.board.copy()
-        nextPlayer = self.next_player
-        while not if_game_ended(board):
-            possible_moves = calculate_possible_moves(board)
-            selected_move = rollout_policy(possible_moves)
-            apply_player_action(board, selected_move, nextPlayer)
-            nextPlayer = get_rival_piece(nextPlayer)
-        return check_end_state(board, self.next_player)
-
-    def backpropagate(self, reward):
-        """
-        Backpropagates the result from the node itself up the the root.
-        :param reward: the result to backpropagate
-        """
-        self.visit_count += 1
-        # Add the result to the appropriate counter
-        if reward == GameState.IS_WIN:
+        self.visits += 1
+        if result == GameState.IS_WIN:
             self.wins += 1
-        elif reward == GameState.IS_LOST:
-            self.losses += 1
-        # Call it in each parent, till at the root.
-        if self.parent is not None:
-            self.parent.backpropagate(reward)
-
-    def get_best_child(self, exploration_param=0.1):
-        """
-        Returns child node with highest UCT value
-        :return:
-        """
-        childrenUCT = [((child.wins - child.losses) / child.visit_count) + exploration_param * np.sqrt(
-            2 * np.log(self.visit_count) / child.visit_count) for child in self.children]
-        bestChildID = np.argmax(childrenUCT)
-        return self.children[bestChildID]
 
 
-def tree_policy(node: Node) -> Node:
+def select_move_from_middle(possible_moves: list[PlayerAction]):
     """
-    Selects the node to run rollout.
-    :param node:
-    :return:
-    """
-    while not node.is_terminal():
-        if not node.is_fully_expanded():
-            return node.expand()
-        else:
-            return node.get_best_child()
-
-
-def rollout_policy(possible_moves: list[PlayerAction]):
-    """
-    Selects the next move from possible moves based on the rollout policy.
-    For now, it selects it randomly, preferring columns closer to the middle.
-    TODO: Implement neural Network choice
+    Selects the next move from possible moves.
+    Selection is done randomly, preferring columns closer to the middle.
     :param possible_moves:
     :return:
     """
@@ -124,19 +128,32 @@ def rollout_policy(possible_moves: list[PlayerAction]):
             return np.int8(column_number)
 
 
-def select_the_best_move(rootNode: Node):
+def run_MCTS(root_state: Connect4State, simulation_no=100):
     """
-    Selects the best action for the given root node.
-    :param rootNode: the root node
-    :return: best_action
+    Runs MCTS simulation for a given root state n times.
+    :param simulation_no: number of simulations to do
+    :param root_state: beginning state
+    :return: best_move
     """
-    # Run the simulation many times to improve the outcome
-    for i in range(NOF_SIMULATIONS):
+    root_node = Node(root_state)
+    # Run simulation_no times the MCTS simulation
+    for i in range(simulation_no):
+        node = root_node
+        state = root_state.copy()
         # 1. Select the node
-        v = tree_policy(rootNode)
-        # 2. Rollout the node (play until the game has finished)
-        reward = v.rollout()
-        # 3. Backpropagate the result up the tree
-        v.backpropagate(reward)
-    # After all simulations, return the best possibility for a move.
-    return rootNode.get_best_child().parent_move
+        while node.untried_moves == [] and node.children != []:
+            node = node.select_best_child()
+            state.move(node.parent_move)
+        # 2. Expand the selected node
+        if node.untried_moves:
+            move = random.choice(node.untried_moves)
+            state.move(move)
+            node = node.add_child(move, state)
+        # 3. Rollout the selected node until the end of the game
+        while not if_game_ended(state.board):
+            state.move(random.choice(state.get_possible_moves()))
+        # 4. Backpropagate
+        while node is not None:
+            node.backpropagate(state.get_reward(node.player_just_moved))
+            node = node.parent
+    return sorted(root_node.children, key=lambda c: c.visits)[-1].parent_move
