@@ -128,6 +128,50 @@ def select_move_from_middle(possible_moves: list[PlayerAction]):
             return np.int8(column_number)
 
 
+def select_node(node: Node, state: Connect4State):
+    """
+    Selects the node for expansion.
+    :param state: current state
+    :param node: current node
+    :return: selected_node, new_state
+    """
+    while node.untried_moves == [] and node.children != []:
+        node = node.select_best_child()
+        state.move(node.parent_move)
+    return node, state
+
+
+def expand(node: Node, state: Connect4State):
+    """
+    Expands the given node
+    :param node: node_to_expand
+    :param state: current state
+    :return: child_node, new_state
+    """
+    if node.untried_moves:
+        move = random.choice(node.untried_moves)
+        state.move(move)
+        node = node.add_child(move, state)
+    return node, state
+
+
+def rollout(state: Connect4State):
+    """
+    Rollouts the state, until the game is ended.
+    :param state:
+    :return:
+    """
+    while not if_game_ended(state.board):
+        state.move(random.choice(state.get_possible_moves()))
+    return state
+
+
+def backpropagate(node: Node, state: Connect4State):
+    while node is not None:
+        node.backpropagate(state.get_reward(node.player_just_moved))
+        node = node.parent
+
+
 def run_MCTS(root_state: Connect4State, simulation_no=100):
     """
     Runs MCTS simulation for a given root state n times.
@@ -141,19 +185,13 @@ def run_MCTS(root_state: Connect4State, simulation_no=100):
         node = root_node
         state = root_state.copy()
         # 1. Select the node
-        while node.untried_moves == [] and node.children != []:
-            node = node.select_best_child()
-            state.move(node.parent_move)
+        node, state = select_node(node, state)
         # 2. Expand the selected node
-        if node.untried_moves:
-            move = random.choice(node.untried_moves)
-            state.move(move)
-            node = node.add_child(move, state)
+        node, state = expand(node, state)
         # 3. Rollout the selected node until the end of the game
-        while not if_game_ended(state.board):
-            state.move(random.choice(state.get_possible_moves()))
+        state = rollout(state)
         # 4. Backpropagate
-        while node is not None:
-            node.backpropagate(state.get_reward(node.player_just_moved))
-            node = node.parent
-    return sorted(root_node.children, key=lambda c: c.visits)[-1].parent_move
+        backpropagate(node, state)
+    # Choose the child
+    children_visits = [child.visits for child in root_node.children]
+    return root_node.children[np.argmax(children_visits)].parent_move

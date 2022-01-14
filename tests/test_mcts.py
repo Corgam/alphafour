@@ -6,12 +6,12 @@ from agents.helpers import PLAYER1
 def test_MCTS():
     board = string_to_board("""
         |==============|
-        |    X         |
-        |    O         |
-        |    X         |
-        |    O   O     |
-        |    X   O     |
-        |    X X O     |
+        |              |
+        |              |
+        |              |
+        |        O     |
+        |        O     |
+        |  X X   O   X |
         |==============|
         |0 1 2 3 4 5 6 |
         """)
