@@ -15,8 +15,8 @@ class Connect4State:
     """
 
     def __init__(self, board=initialize_game_state(), player=PLAYER1):
-        self.player_just_moved = get_rival_piece(player)  # Player who moved last.
-        self.board = board  # The board itself
+        self.player_just_moved: BoardPiece = get_rival_piece(player)  # Player who moved last.
+        self.board: np.ndarray = board  # The board itself
 
     def copy(self) -> Connect4State:
         """
@@ -177,7 +177,7 @@ def backpropagate(node: Node, state: Connect4State):
         node = node.parent
 
 
-def run_MCTS(root_state: Connect4State, simulation_no=100):
+def run_MCTS(root_state: Connect4State, simulation_no=100) -> (PlayerAction, Node):
     """
     Runs MCTS simulation for a given root state n times.
     :param simulation_no: number of simulations to do
@@ -199,4 +199,4 @@ def run_MCTS(root_state: Connect4State, simulation_no=100):
         backpropagate(node, state)
     # Choose the child
     children_visits = [child.visits for child in root_node.children]
-    return root_node.children[np.argmax(children_visits)].parent_move
+    return root_node.children[np.argmax(children_visits)].parent_move, root_node

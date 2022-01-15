@@ -53,10 +53,10 @@ class FullLayer(torch.nn.Module):
 
 
 class AlphaNet(torch.nn.Module):
-    '''
+    """
     Main class for the deep convolutional residual neural network for the connect four agent.
     Consists of one convolutional layer, followed by 19 residual layers and a fully connected layer at the end.
-    '''
+    """
 
     def __init__(self) -> None:
         super(AlphaNet, self).__init__()
@@ -76,11 +76,11 @@ class AlphaNet(torch.nn.Module):
 
 
 def createNeuralBoard(board: np.ndarray, player: BoardPiece = PLAYER1):
-    '''
+    """
     Translates the board array into 3D tensor for NN input.
     First and second dimensions will store 1s where there is a piece of the first and second player respectively.
-    The last third dimenstion, will be filled with value of the next player to move: 1 or 2. 
-    '''
+    The last third dimension, will be filled with value of the next player to move: 1 or 2.
+    """
     neuralBoard = np.zeros([3, 6, 7]).astype(int)
     # Move the values from the board
     for row in range(6):
