@@ -37,7 +37,7 @@ def save_into_file(filename, dataset_finished: list):
         pickle.dump(dataset_finished, file)
 
 
-def MCTS_self_play(board: np.ndarray = initialize_game_state(), player: BoardPiece = PLAYER1, iterations: int = 100):
+def MCTS_self_play(board: np.ndarray = initialize_game_state(), player: BoardPiece = PLAYER1, iterations: int = 10):
     for iteration in range(iterations):
         # Init variables
         state = Connect4State(board, player)
