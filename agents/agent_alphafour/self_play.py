@@ -1,34 +1,13 @@
+from datetime import datetime
 import os
 import pickle
-from datetime import datetime
-from typing import Optional, Tuple
+
 import numpy as np
 
-from agents.agent_alphafour.mcts import Connect4State, run_MCTS, Node
-from agents.common import pretty_print_board, initialize_game_state
-from agents.helpers import SavedState, PlayerAction, BoardPiece, GameState, get_rival_piece, convert_number2print, \
-    PLAYER1
-
-
-def generate_move_alphafour(
-        board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState]
-) -> Tuple[PlayerAction, Optional[SavedState]]:
-    root_state = Connect4State(board, player)
-    move, root_node = run_MCTS(root_state, 100)
-    return move, saved_state
-
-
-def calculatePolicy(node: Node):
-    """
-    Calculates policy
-    :param node:
-    :return:
-    """
-    sumVisits = 0
-    for child in node.children:
-        sumVisits += child.visits
-    policy = [child.visits/sumVisits for child in node.children]
-    return policy
+from agents.agent_alphafour.gen_move import calculatePolicy
+from agents.agent_alphafour.mcts import Connect4State, run_MCTS
+from agents.common import initialize_game_state, pretty_print_board
+from agents.helpers import BoardPiece, PLAYER1, convert_number2print, GameState, get_rival_piece
 
 
 def save_into_file(filename, dataset_finished: list):

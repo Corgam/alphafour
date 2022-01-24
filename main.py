@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Optional, Callable
 
-from agents.agent_alphafour.alphafour import MCTS_self_play
+from agents.agent_alphafour.self_play import MCTS_self_play
 from agents.agent_alphafour.evaluator import evaluate_NN
 from agents.agent_alphafour.neural import trainNN
 from agents.common import PlayerAction, BoardPiece

@@ -1,4 +1,4 @@
-from agents.agent_alphafour.alphafour import MCTS_self_play
+from agents.agent_alphafour.gen_move import MCTS_self_play
 from agents.agent_alphafour.mcts import Connect4State, run_MCTS
 from agents.common import string_to_board
 from agents.helpers import PLAYER1
