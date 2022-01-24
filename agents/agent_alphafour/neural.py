@@ -94,3 +94,7 @@ def createNeuralBoard(board: np.ndarray, player: BoardPiece = PLAYER1):
     # Set the player to move
     neuralBoard[2][:][:] = player
     return neuralBoard
+
+
+def trainNN():
+    pass

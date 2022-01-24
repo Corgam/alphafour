@@ -1,9 +1,13 @@
-### CODE FROM THE TUTORIUM ###
 import numpy as np
 from typing import Optional, Callable
+
+from agents.agent_alphafour.alphafour import MCTS_self_play
+from agents.agent_alphafour.evaluator import evaluate_NN
+from agents.agent_alphafour.neural import trainNN
 from agents.common import PlayerAction, BoardPiece
 from agents.helpers import SavedState, GenMove
 from agents.agent_alphafour import generate_move_alphafour
+
 
 # Read the keyboard input for user move
 def user_move(board: np.ndarray, _player: BoardPiece, saved_state: Optional[SavedState]):
@@ -85,12 +89,31 @@ def human_vs_agent(
                     break
 
 
+def main_pipeline(iterations=100):
+    """
+    Runs the main pipeline of AlphaFour
+    :param iterations:
+    :return:
+    """
+    for i in range(iterations):
+        # Run the self-play MCTS and generate the data
+        MCTS_self_play()
+        # Train the NN with data from MCTS
+        trainNN()
+        if i > 0:
+            better_NN = evaluate_NN()
+            # TODO: If the new NN does not win, train it more.
+
+
 if __name__ == "__main__":
-    print("Welcome to Connect4!")
-    print("1. Human vs. Human")
-    print("2. Human vs. AlphaFour Agent")
+    print("Welcome to AlphaFour!")
+    print("1. Run AlphaFour training")
+    print("2. Play Human vs. Human")
+    print("3. Play Human vs. AlphaFour Agent")
     agent = input("Please type the number to choose the agent:")
     if agent == "1":
-        human_vs_agent(user_move)
+        main_pipeline()
     elif agent == "2":
+        human_vs_agent(user_move)
+    elif agent == "3":
         human_vs_agent(generate_move_alphafour)
