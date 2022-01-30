@@ -119,3 +119,24 @@ def calculate_possible_moves(board: np.ndarray) -> list[PlayerAction]:
         if board[0][column_number] == NO_PLAYER:
             possible_moves.append(np.int8(column_number))
     return possible_moves
+
+
+def select_move_from_middle(possible_moves: list[PlayerAction]):
+    """
+    Selects the next move from possible moves.
+    Selection is done randomly, preferring columns closer to the middle.
+    :param possible_moves:
+    :return:
+    """
+    assert len(possible_moves) != 0
+    # Generate the temporary list, starting from the middle
+    columns_order = [3]
+    # Then other columns in the order of how far they are from the middle (randomness for the same distance)
+    for distance in [1, 2, 3]:
+        temp_order = [3 - distance, 3 + distance]
+        random.shuffle(temp_order)
+        columns_order.extend(temp_order)
+    # Select the column which is the closest to the middle
+    for column_number in columns_order:
+        if possible_moves.count(np.int8(column_number)):
+            return np.int8(column_number)

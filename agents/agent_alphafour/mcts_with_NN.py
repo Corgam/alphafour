@@ -77,7 +77,7 @@ class Node:
         self.wins: int = 0  # How many times this node has won
         self.untried_moves: list[
             PlayerAction] = state.get_possible_moves()  # List of all moves possible from that node.
-        self.player_just_moved = state.player_just_moved  # Player number who just moved
+        self.state = state
 
     def add_child(self, move: PlayerAction, state: Connect4State) -> Node:
         """
@@ -97,6 +97,7 @@ class Node:
         https://cs.stackexchange.com/questions/113473/difference-between-ucb1-and-uct
         :return: child_with_biggest_UCB1
         """
+        # TODO: Here the selection should be done based on the priorities of children
         UCTs = [child.wins / child.visits + np.sqrt(2 * np.log(self.visits) / child.visits) for child in self.children]
         return self.children[np.argmax(UCTs)]
 
@@ -108,27 +109,6 @@ class Node:
         self.visits += 1
         if result == GameState.IS_WIN:
             self.wins += 1
-
-
-def select_move_from_middle(possible_moves: list[PlayerAction]):
-    """
-    Selects the next move from possible moves.
-    Selection is done randomly, preferring columns closer to the middle.
-    :param possible_moves:
-    :return:
-    """
-    assert len(possible_moves) != 0
-    # Generate the temporary list, starting from the middle
-    columns_order = [3]
-    # Then other columns in the order of how far they are from the middle (randomness for the same distance)
-    for distance in [1, 2, 3]:
-        temp_order = [3 - distance, 3 + distance]
-        random.shuffle(temp_order)
-        columns_order.extend(temp_order)
-    # Select the column which is the closest to the middle
-    for column_number in columns_order:
-        if possible_moves.count(np.int8(column_number)):
-            return np.int8(column_number)
 
 
 def select_node(node: Node, state: Connect4State):
@@ -144,13 +124,16 @@ def select_node(node: Node, state: Connect4State):
     return node, state
 
 
-def expand(node: Node, state: Connect4State):
+def expand(node: Node, state: Connect4State, child_priorities):
     """
     Expands the given node
     :param node: node_to_expand
     :param state: current state
+    :param child_priorities:
     :return: child_node, new_state
     """
+    # TODO: Here no expansion should take place, instead the node should save the
+    # TODO: children priorities as expansion.
     if node.untried_moves:
         move = random.choice(node.untried_moves)
         state.move(move)
@@ -169,15 +152,31 @@ def rollout(state: Connect4State):
     return state
 
 
-def backpropagate(node: Node, state: Connect4State):
+def backpropagate(node: Node, state: Connect4State, value_estimate):
     """
     Backpropagates the value up the tree
+    :param value_estimate:
     :param node: node to start backpropagation from
     :param state: current state
     """
     while node is not None:
-        node.backpropagate(state.get_reward(node.player_just_moved))
+        # TODO: Check if the value is negative for correct player.
+        if state.player_just_moved == PLAYER1:
+            node.backpropagate(value_estimate)
+        else:
+            node.backpropagate(-1 * value_estimate)
         node = node.parent
+
+
+def get_NN_outputs(NN: AlphaNet, node: Node):
+    """
+
+    :param NN:
+    :param node:
+    :return:
+    """
+    child_priorities, value_estimate = NN(node.state.board)
+    return child_priorities, value_estimate
 
 
 def run_MCTS(root_state: Connect4State, simulation_no: int, NN: AlphaNet) -> (PlayerAction, Node):
@@ -196,12 +195,14 @@ def run_MCTS(root_state: Connect4State, simulation_no: int, NN: AlphaNet) -> (Pl
         state = root_state.copy()
         # 1. Select the node
         node, state = select_node(node, state)
-        # 2. Expand the selected node
-        node, state = expand(node, state)
-        # 3. Rollout the selected node until the end of the game
+        # 2. Ask the NN for values
+        child_priorities, value_estimate = get_NN_outputs(NN, node)
+        # 3. Expand the selected node
+        node, state = expand(node, state, child_priorities)
+        # 4. Rollout the selected node until the end of the game
         state = rollout(state)
-        # 4. Backpropagate
-        backpropagate(node, state)
+        # 5. Backpropagate
+        backpropagate(node, state, value_estimate)
     # Choose the child
     children_visits = [child.visits for child in root_node.children]
     return root_node.children[np.argmax(children_visits)].parent_move, root_node
