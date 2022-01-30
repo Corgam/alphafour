@@ -6,6 +6,8 @@ from typing import List
 import numpy as np
 import torch.cuda
 from from_root import from_root
+
+from agents.agent_alphafour.READY_NN import ConnectNet, encode_board
 from agents.agent_alphafour.neural import AlphaNet
 from agents.common import apply_player_action, if_game_ended, check_end_state, initialize_game_state, pretty_print_board
 from agents.helpers import calculate_possible_moves, get_rival_piece, PlayerAction, GameState, PLAYER1, BoardPiece
@@ -192,9 +194,14 @@ def get_NN_outputs(NN: AlphaNet, node: Node):
     :return:
     """
     # TODO: Implement the real NN
-    child_priorities = [0.2, 0.1, 0.3, 0.18, 0.11, 0.01, 0.5]
-    value_estimate = 0.4
-    # child_priorities, value_estimate = NN(node.state.board)
+    # child_priorities = [0.2, 0.1, 0.3, 0.18, 0.11, 0.01, 0.5]
+    # value_estimate = 0.4
+    encoded_s = encode_board(node.state.board)
+    encoded_s = encoded_s.transpose(2, 0, 1)
+    encoded_s = torch.from_numpy(encoded_s).float().cuda()
+    child_priorities, value_estimate = NN(encoded_s)
+    child_priorities = child_priorities.detach().cpu().numpy().reshape(-1)
+    value_estimate = value_estimate.item()
     return child_priorities, value_estimate
 
 
@@ -229,10 +236,14 @@ def run_single_MCTS(root_state: Connect4State, simulation_no: int, NN: AlphaNet)
 
 def run_AlphaFour(root_state: Connect4State, simulation_no=100, NN_iteration=0):
     # Create the NN
-    NN = AlphaNet()
+    NN = ConnectNet() #AlphaNet()
     NN.eval()  # Turn on the evaluation mode
+    # Turn on CUDA
+    if torch.cuda.is_available():
+        NN.cuda()
     # Load the NN if provided
-    NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{NN_iteration}.pth.tar")
+    #NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{NN_iteration}.pth.tar")
+    NN_filename = from_root(f"agents/agent_alphafour/trained_NN/c4_current_net_trained_iter8.pth.tar")
     if os.path.isfile(NN_filename):
         loaded_NN = torch.load(NN_filename)
         NN.load_state_dict(loaded_NN["state_dict"])
@@ -240,10 +251,8 @@ def run_AlphaFour(root_state: Connect4State, simulation_no=100, NN_iteration=0):
     else:
         torch.save({"state_dict": NN.state_dict()}, NN_filename)
         print(f"Created new {NN_filename} neural network.")
-    # Turn on CUDA
-    if torch.cuda.is_available():
-        NN.cuda()
     print("Started MCTS...")
     with torch.no_grad():
-        run_single_MCTS(root_state, simulation_no, NN)
+        move, root_node = run_single_MCTS(root_state, simulation_no, NN)
     print("MCTS has finished!")
+    return move, root_node
