@@ -1,6 +1,7 @@
 # Additional
 .idea
 agents/agent_alphafour/training_data/*
+agents/agent_alphafour/trained_NN/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
