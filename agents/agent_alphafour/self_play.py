@@ -5,7 +5,7 @@ import pickle
 import numpy as np
 
 from agents.agent_alphafour.gen_move import calculatePolicy
-from agents.agent_alphafour.mcts import Connect4State, run_MCTS
+from agents.agent_alphafour.mcts_with_NN import Connect4State, run_MCTS
 from agents.common import initialize_game_state, pretty_print_board
 from agents.helpers import BoardPiece, PLAYER1, convert_number2print, GameState, get_rival_piece
 

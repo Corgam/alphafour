@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 import numpy as np
 
-from agents.agent_alphafour.mcts import Connect4State, run_MCTS, Node
+from agents.agent_alphafour.mcts_with_NN import Connect4State, run_MCTS, Node
 from agents.helpers import SavedState, PlayerAction, BoardPiece
 
 

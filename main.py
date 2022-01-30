@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Optional, Callable
 
+from agents.agent_MCTS.gen_move import generate_move_MCTS
 from agents.agent_alphafour.self_play import MCTS_self_play
 from agents.agent_alphafour.evaluator import evaluate_NN
 from agents.agent_alphafour.neural import trainNN
@@ -110,6 +111,7 @@ if __name__ == "__main__":
     print("1. Run AlphaFour training")
     print("2. Play Human vs. Human")
     print("3. Play Human vs. AlphaFour Agent")
+    print("4. Play Human vs. MCTS Agent")
     agent = input("Please type the number to choose the agent:")
     if agent == "1":
         main_pipeline()
@@ -117,3 +119,7 @@ if __name__ == "__main__":
         human_vs_agent(user_move)
     elif agent == "3":
         human_vs_agent(generate_move_alphafour)
+    elif agent == "4":
+        human_vs_agent(generate_move_MCTS)
+    else:
+        print("Wrong number selected. Restart program and select number from 1 to 4.")
