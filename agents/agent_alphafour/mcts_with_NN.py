@@ -78,6 +78,7 @@ class Node:
         self.untried_moves: list[
             PlayerAction] = state.get_possible_moves()  # List of all moves possible from that node.
         self.state = state
+        self.children_priorities = np.zeros([7], np.float32)
 
     def add_child(self, move: PlayerAction, state: Connect4State) -> Node:
         """
@@ -97,8 +98,12 @@ class Node:
         https://cs.stackexchange.com/questions/113473/difference-between-ucb1-and-uct
         :return: child_with_biggest_UCB1
         """
-        # TODO: Here the selection should be done based on the priorities of children
-        UCTs = [child.wins / child.visits + np.sqrt(2 * np.log(self.visits) / child.visits) for child in self.children]
+        # UCTs = [child.wins / child.visits + np.sqrt(2 * np.log(self.visits) / child.visits) for child in /
+        # self.children]
+        # TODO: Check if the calculations are right
+        UCTs = [child.wins / child.visits + np.sqrt(
+            2 * np.log(self.visits) * (abs(self.children_priorities[self.children.index(child)]) / child.visits)) for
+                child in self.children]
         return self.children[np.argmax(UCTs)]
 
     def backpropagate(self, result: GameState):
@@ -124,16 +129,13 @@ def select_node(node: Node, state: Connect4State):
     return node, state
 
 
-def expand(node: Node, state: Connect4State, child_priorities):
+def expand(node: Node, state: Connect4State):
     """
     Expands the given node
     :param node: node_to_expand
     :param state: current state
-    :param child_priorities:
     :return: child_node, new_state
     """
-    # TODO: Here no expansion should take place, instead the node should save the
-    # TODO: children priorities as expansion.
     if node.untried_moves:
         move = random.choice(node.untried_moves)
         state.move(move)
@@ -141,15 +143,29 @@ def expand(node: Node, state: Connect4State, child_priorities):
     return node, state
 
 
-def rollout(state: Connect4State):
+def rollout(node, child_priorities):
     """
     Rollouts the state, until the game is ended.
-    :param state: current state
+    :param child_priorities:
+    :param node:
     :return: state_after_rollout
     """
-    while not if_game_ended(state.board):
-        state.move(random.choice(state.get_possible_moves()))
-    return state
+    moves = node.untried_moves
+    temp_priorities = child_priorities
+    # If it is the root node, make the priorities a little bit random, so each run is different
+    if node.parent is None:
+        randomValues = np.random.dirichlet(np.zeros([len(temp_priorities)], np.float32) + 192)
+        for prior in range(len(temp_priorities)):
+            temp_priorities[prior] = 0.75 * temp_priorities[prior] + 0.25 * randomValues[prior]
+    # Mask all unavailable moves
+    for i in range(len(child_priorities)):
+        if i not in moves:
+            temp_priorities[i] = 0
+    node.children_priorities = temp_priorities
+    return node.state
+    # while not if_game_ended(state.board):
+    #     state.move(random.choice(state.get_possible_moves()))
+    # return state
 
 
 def backpropagate(node: Node, state: Connect4State, value_estimate):
@@ -175,7 +191,10 @@ def get_NN_outputs(NN: AlphaNet, node: Node):
     :param node:
     :return:
     """
-    child_priorities, value_estimate = NN(node.state.board)
+    # TODO: Implement the real NN
+    child_priorities = [0.2, 0.1, 0.3, 0.18, 0.11, 0.01, 0.5]
+    value_estimate = 0.4
+    # child_priorities, value_estimate = NN(node.state.board)
     return child_priorities, value_estimate
 
 
@@ -198,9 +217,9 @@ def run_single_MCTS(root_state: Connect4State, simulation_no: int, NN: AlphaNet)
         # 2. Ask the NN for values
         child_priorities, value_estimate = get_NN_outputs(NN, node)
         # 3. Expand the selected node
-        node, state = expand(node, state, child_priorities)
+        node, state = expand(node, state)
         # 4. Rollout the selected node until the end of the game
-        state = rollout(state)
+        state = rollout(node, child_priorities)
         # 5. Backpropagate
         backpropagate(node, state, value_estimate)
     # Choose the child
@@ -224,6 +243,7 @@ def run_AlphaFour(root_state: Connect4State, simulation_no=100, NN_iteration=0):
     # Turn on CUDA
     if torch.cuda.is_available():
         NN.cuda()
+    print("Started MCTS...")
     with torch.no_grad():
         run_single_MCTS(root_state, simulation_no, NN)
     print("MCTS has finished!")
