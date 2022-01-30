@@ -214,10 +214,10 @@ def run_single_MCTS(root_state: Connect4State, simulation_no: int, NN: AlphaNet)
         state = root_state.copy()
         # 1. Select the node
         node, state = select_node(node, state)
-        # 2. Ask the NN for values
-        child_priorities, value_estimate = get_NN_outputs(NN, node)
-        # 3. Expand the selected node
+        # 2. Expand the selected node
         node, state = expand(node, state)
+        # 3. Ask the NN for values
+        child_priorities, value_estimate = get_NN_outputs(NN, node)
         # 4. Rollout the selected node until the end of the game
         state = rollout(node, child_priorities)
         # 5. Backpropagate
