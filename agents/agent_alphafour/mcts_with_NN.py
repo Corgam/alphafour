@@ -1,9 +1,12 @@
 from __future__ import annotations  # Used for type hinting of class inside of itself
 
+import os
 import random
 from typing import List
 import numpy as np
+import torch.cuda
 
+from agents.agent_alphafour.neural import AlphaNet
 from agents.common import apply_player_action, if_game_ended, check_end_state, initialize_game_state, pretty_print_board
 from agents.helpers import calculate_possible_moves, get_rival_piece, PlayerAction, GameState, PLAYER1, BoardPiece
 
@@ -177,13 +180,15 @@ def backpropagate(node: Node, state: Connect4State):
         node = node.parent
 
 
-def run_MCTS(root_state: Connect4State, simulation_no=100) -> (PlayerAction, Node):
+def run_MCTS(root_state: Connect4State, simulation_no: int, NN: AlphaNet) -> (PlayerAction, Node):
     """
     Runs MCTS simulation for a given root state n times.
     :param simulation_no: number of simulations to do
     :param root_state: beginning state
+    :param NN: the neural network
     :return: best_move
     """
+    # Create the root node
     root_node = Node(root_state)
     # Run simulation_no times the MCTS simulation
     for i in range(simulation_no):
@@ -200,3 +205,24 @@ def run_MCTS(root_state: Connect4State, simulation_no=100) -> (PlayerAction, Nod
     # Choose the child
     children_visits = [child.visits for child in root_node.children]
     return root_node.children[np.argmax(children_visits)].parent_move, root_node
+
+
+def run_AlphaFour(root_state: Connect4State, simulation_no=100, NN_iteration=0):
+    # Create the NN
+    NN = AlphaNet()
+    NN.eval()  # Turn on the evaluation mode
+    # Load the NN if provided
+    NN_filename = os.path.join("agents/agent_alphafour/trained_NN/", f"NN_iteration{NN_iteration}.pth.tar")
+    if os.path.isfile(NN_filename):
+        loaded_NN = torch.load(NN_filename)
+        NN.load_state_dict(loaded_NN["state_dict"])
+        print(f"Loaded {NN_filename} neural network.")
+    else:
+        torch.save({"state_dict": NN.state_dict()}, NN_filename)
+        print(f"Created new {NN_filename} neural network.")
+    # Turn on CUDA
+    if torch.cuda.is_available():
+        NN.cuda()
+    with torch.no_grad():
+        run_MCTS(root_state, simulation_no, NN)
+    print("MCTS has finished!")

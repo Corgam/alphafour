@@ -4,10 +4,22 @@ import pickle
 
 import numpy as np
 
-from agents.agent_alphafour.gen_move import calculatePolicy
-from agents.agent_alphafour.mcts_with_NN import Connect4State, run_MCTS
+from agents.agent_alphafour.mcts_with_NN import Connect4State, run_AlphaFour, Node
 from agents.common import initialize_game_state, pretty_print_board
 from agents.helpers import BoardPiece, PLAYER1, convert_number2print, GameState, get_rival_piece
+
+
+def calculatePolicy(node: Node):
+    """
+    Calculates policy
+    :param node:
+    :return:
+    """
+    sumVisits = 0
+    for child in node.children:
+        sumVisits += child.visits
+    policy = [child.visits / sumVisits for child in node.children]
+    return policy
 
 
 def save_into_file(filename, dataset_finished: list):
@@ -27,9 +39,9 @@ def MCTS_self_play(board: np.ndarray = initialize_game_state(), player: BoardPie
         while state.get_possible_moves():
             print(pretty_print_board(state.board))
             if state.player_just_moved == 1:
-                move, root_node = run_MCTS(state, 1000)
+                move, root_node = run_AlphaFour(state, 1000)
             else:
-                move, root_node = run_MCTS(state, 100)
+                move, root_node = run_AlphaFour(state, 100)
             policy = calculatePolicy(root_node)
             # TODO: Encode the board to fit NN
             dataset_not_finished.append([state.board.copy(), policy])
@@ -54,4 +66,3 @@ def MCTS_self_play(board: np.ndarray = initialize_game_state(), player: BoardPie
                 dataset_finished.append([board, policy, value])
         timeStr = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
         save_into_file(f"data_iter{iteration}_" + timeStr + ".pkl", dataset_finished)
-
