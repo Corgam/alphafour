@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from naf.alphafour.agents.common import string_to_board
+from agents.common import string_to_board
 
 NUMBER_OF_RES_LAYERS = 5
 
@@ -12,7 +12,7 @@ class Convblock(nn.Module):
     def __init__(self):
         super(Convblock, self).__init__()
 
-        self.bn = nn.BatchNorm2d(1)
+        self.bn = nn.BatchNorm2d(42)
         self.conv = nn.Conv2d(1, 42, kernel_size=(3, 3), stride=(1, 1), padding=1)
 
     def forward(self, value):
@@ -20,7 +20,7 @@ class Convblock(nn.Module):
         value = value.type(torch.FloatTensor)
 
         temp = self.conv(value)
-        #temp = self.bn(value)
+        temp = self.bn(temp)
         return F.relu(temp)
 
 
@@ -30,23 +30,23 @@ class ResBlock(nn.Module):
         self.expansion = 4
         self.in_channels, self.out_channels, self.activation = in_channels, out_channels, activation
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=(1, 1), stride=(1, 1), padding=1, bias=False)
-        #self.bn1 = nn.BatchNorm1d(out_channels)
+        self.bn1 = nn.BatchNorm2d(out_channels)
         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
-        #self.bn2 = nn.BatchNorm1d(out_channels)
+        self.bn2 = nn.BatchNorm2d(out_channels)
         self.conv3 = nn.Conv2d(out_channels, out_channels, kernel_size=(1, 1), stride=(1, 1),
                                padding=1, bias=False)
-        #self.bn3 = nn.BatchNorm2d(out_channels * self.expansion)
+        self.bn3 = nn.BatchNorm2d(out_channels)
 
     def forward(self, value):
 
         value = self.conv1(value)
-        #value = self.bn1(value)
+        value = self.bn1(value)
         value = F.relu(value)
         value = self.conv2(value)
-        #value = self.bn2(value)
+        value = self.bn2(value)
         value = F.relu(value)
         value = self.conv3(value)
-        #value = self.bn3(value)
+        value = self.bn3(value)
         return value
 
 
@@ -54,7 +54,7 @@ class OutBlock(nn.Module):
     def __init__(self):
         super(OutBlock, self).__init__()
         self.conv = nn.Conv2d(42, 3, kernel_size=(1, 1))  # value head
-        #self.bn = nn.BatchNorm2d(3)
+        self.bn = nn.BatchNorm2d(3)
         self.fc1 = nn.Linear(10206, 32)
         self.fc2 = nn.Linear(32, 1)
 
@@ -62,14 +62,16 @@ class OutBlock(nn.Module):
         self.bn1 = nn.BatchNorm2d(32)
         self.logsoftmax = nn.LogSoftmax(dim=1)
         self.fc = nn.Linear(108864, 7)
+        # self.bn2 = nn.BatchNorm1d(7)
 
     def forward(self, s):
-        v = F.relu((self.conv(s)))  # value head
+        v = F.relu(self.bn(self.conv(s)))  # value head
         v = v.view(-1, 10206)  # batch_size X channel X height X width
         v = F.relu(self.fc1(v))
-        v = torch.tanh(self.fc2(v))
+        v = self.fc2(v)
+        # v = self.bn2(v)
 
-        p = F.relu((self.conv1(s)))  # policy head
+        p = F.relu(self.bn1(self.conv1(s)))  # policy head
         p = p.view(-1, 108864)
         p = self.fc(p)
         p = self.logsoftmax(p).exp()
