@@ -53,29 +53,25 @@ class ResBlock(nn.Module):
 class OutBlock(nn.Module):
     def __init__(self):
         super(OutBlock, self).__init__()
-        self.conv = nn.Conv2d(42, 3, kernel_size=(1, 1))  # value head
-        self.bn = nn.BatchNorm2d(3)
-        self.fc1 = nn.Linear(10206, 32)
-        self.fc2 = nn.Linear(32, 1)
+        self.conv = nn.Conv2d(42, 7, (3, 3), stride=(1, 1))
+        self.conv1 = nn.Conv2d(42, 1, (3, 3), stride=(1, 1))
+        self.ln1 = nn.Linear(25,7)
+        self.ln2 = nn.Linear(25,1)
 
-        self.conv1 = nn.Conv2d(42, 32, kernel_size=(1, 1))  # policy head
-        self.bn1 = nn.BatchNorm2d(32)
-        self.logsoftmax = nn.LogSoftmax(dim=1)
-        self.fc = nn.Linear(108864, 7)
-        # self.bn2 = nn.BatchNorm1d(7)
 
-    def forward(self, s):
-        v = F.relu(self.bn(self.conv(s)))  # value head
-        v = v.view(-1, 10206)  # batch_size X channel X height X width
-        v = F.relu(self.fc1(v))
-        v = self.fc2(v)
-        # v = self.bn2(v)
 
-        p = F.relu(self.bn1(self.conv1(s)))  # policy head
-        p = p.view(-1, 108864)
-        p = self.fc(p)
-        p = self.logsoftmax(p).exp()
-        return p, v
+
+    def forward(self, value):
+        policy_head = self.conv(value)
+        value_head = self.conv1(value)
+
+        policy_head = self.ln1(policy_head)
+        value_head = self.ln2(value_head)
+        value_head = torch.mean(value_head)
+        policy_head = torch.mean(policy_head)
+        print(value.size())
+        print(value_head.size())
+        return policy_head, value_head
 
 
 class AlphaNet(torch.nn.Module):
