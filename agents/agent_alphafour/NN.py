@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 from agents.common import string_to_board
 
-NUMBER_OF_RES_LAYERS = 5
+NUMBER_OF_RES_LAYERS = 1
 
 
 class Convblock(nn.Module):
@@ -54,26 +54,23 @@ class OutBlock(nn.Module):
     def __init__(self):
         super(OutBlock, self).__init__()
         self.conv = nn.Conv2d(42, 7, (3, 3), stride=(1, 1))
-        self.pool = nn.AvgPool2d(kernel_size=(3, 3))
-        self.ln1 = nn.Linear(252, 7)
-        self.bn1 = nn.BatchNorm1d(7)
+        # self.pool = nn.AvgPool2d(kernel_size=(3, 3))
+        self.ln = nn.Linear(1134, 7)
 
         self.conv1 = nn.Conv2d(42, 1, (3, 3), stride=(1, 1))
-        self.ln2 = nn.Linear(288, 1)
+        self.ln1 = nn.Linear(162, 1)
 
     def forward(self, value):
         policy_head = self.conv(value)
-        policy_head = F.relu(self.pool(policy_head))
-        policy_head = policy_head.view(-1, 252)
-        policy_head = self.ln1(policy_head)
-        policy_head = self.bn1(policy_head)
-        policy_head = torch.tanh(policy_head)
-        policy_head = torch.mean(policy_head, dim=0)
+        # policy_head = F.relu(policy_head)
+        policy_head = policy_head.view(1, 1134)
+        policy_head = self.ln(policy_head)
+        policy_head = torch.softmax(policy_head, dim=1)
 
         value_head = self.conv1(value)
-        value_head = F.relu(self.pool(value_head))
-        value_head = value_head.view(-1, 288)
-        value_head = self.ln2(value_head)
+        # value_head = F.relu(value_head)
+        value_head = value_head.view(1, 162)
+        value_head = self.ln1(value_head)
 
         return policy_head, value_head
 
