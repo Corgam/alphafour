@@ -5,6 +5,8 @@ import torch.nn.functional as F
 
 from naf.alphafour.agents.common import string_to_board
 
+NUMBER_OF_RES_LAYERS = 5
+
 
 class Convblock(nn.Module):
     def __init__(self):
@@ -12,9 +14,6 @@ class Convblock(nn.Module):
 
         self.bn = nn.BatchNorm2d(1)
         self.conv = nn.Conv2d(1, 42, kernel_size=(3, 3), stride=(1, 1), padding=1)
-
-
-
 
     def forward(self, value):
         value = torch.from_numpy(value)
@@ -56,37 +55,38 @@ class OutBlock(nn.Module):
         super(OutBlock, self).__init__()
         self.conv = nn.Conv2d(42, 3, kernel_size=(1, 1))  # value head
         #self.bn = nn.BatchNorm2d(3)
-        self.fc1 = nn.Linear(367, 32)
+        self.fc1 = nn.Linear(10206, 32)
         self.fc2 = nn.Linear(32, 1)
 
         self.conv1 = nn.Conv2d(42, 32, kernel_size=(1, 1))  # policy head
-        #self.bn1 = nn.BatchNorm2d(32)
+        self.bn1 = nn.BatchNorm2d(32)
         self.logsoftmax = nn.LogSoftmax(dim=1)
-        self.fc = nn.Linear(6732, 7)
+        self.fc = nn.Linear(108864, 7)
 
     def forward(self, s):
         v = F.relu((self.conv(s)))  # value head
-        v = v.view(-1, 367)  # batch_size X channel X height X width
+        v = v.view(-1, 10206)  # batch_size X channel X height X width
         v = F.relu(self.fc1(v))
         v = torch.tanh(self.fc2(v))
 
         p = F.relu((self.conv1(s)))  # policy head
-        p = p.view(-1, 6732)
+        p = p.view(-1, 108864)
         p = self.fc(p)
         p = self.logsoftmax(p).exp()
         return p, v
 
 
 class AlphaNet(torch.nn.Module):
-    '''
+    """
     Main class for the deep convolutional residual neural network for the connect four agent.
-    Consists of one convolutional layer, followed by 19 residual layers and a fully connected layer at the end.
-    '''
+    Consists of one convolutional layer, followed by NUMBER_OF_RES_LAYERS residual layers and a fully connected layer
+    at the end.
+    """
 
     def __init__(self) -> None:
         super(AlphaNet, self).__init__()
         self.convLayer = Convblock()
-        self.resLayers = [ResBlock(42, 42)] * 19
+        self.resLayers = [ResBlock(42, 42)] * NUMBER_OF_RES_LAYERS
         self.fullLayer = OutBlock()
 
     # Parameters
@@ -94,8 +94,8 @@ class AlphaNet(torch.nn.Module):
     # Methods
     def forward(self, values):
         values = self.convLayer(np.expand_dims(np.expand_dims(values, 1), 2))
-        for layerID in range(19):
-            values = self.resLayers[layerID](values)
+        for res_layer in self.resLayers:
+            values = res_layer(values)
         values = self.fullLayer(values)
         return values
 
@@ -121,4 +121,4 @@ if __name__ == "__main__":
     batch_size = 64
     num_epochs = 1
 
-    print(net(neuralBoard).shape)
+    print(net(neuralBoard))
