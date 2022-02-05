@@ -38,7 +38,6 @@ class ResBlock(nn.Module):
         self.bn3 = nn.BatchNorm2d(out_channels)
 
     def forward(self, value):
-
         value = self.conv1(value)
         value = self.bn1(value)
         value = F.relu(value)
@@ -97,6 +96,15 @@ class AlphaNet(torch.nn.Module):
             values = res_layer(values)
         values = self.fullLayer(values)
         return values
+
+
+class AlphaLossFunction(torch.nn.Module):
+    # TODO
+    def __init__(self):
+        pass
+
+    def forward(self):
+        pass
 
 
 if __name__ == "__main__":
