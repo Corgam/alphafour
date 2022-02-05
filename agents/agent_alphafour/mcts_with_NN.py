@@ -101,6 +101,7 @@ class Node:
         # UCTs = [child.wins / child.visits + np.sqrt(2 * np.log(self.visits) / child.visits) for child in /
         # self.children]
         # TODO: Check if the calculations are right
+        # TODO: Maybe replace the first value?
         UCTs = [child.wins / child.visits + np.sqrt(
             2 * np.log(self.visits) * (abs(self.children_priorities[self.children.index(child)]) / child.visits)) for
                 child in self.children]
