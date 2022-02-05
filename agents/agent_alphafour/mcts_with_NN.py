@@ -6,8 +6,9 @@ from typing import List
 import numpy as np
 import torch.cuda
 from from_root import from_root
-from agents.agent_alphafour.neural import AlphaNet
-from agents.common import apply_player_action, if_game_ended, check_end_state, initialize_game_state, pretty_print_board
+
+from agents.agent_alphafour.NN import AlphaNet
+from agents.common import apply_player_action, check_end_state, initialize_game_state, pretty_print_board
 from agents.helpers import calculate_possible_moves, get_rival_piece, PlayerAction, GameState, PLAYER1, BoardPiece
 
 

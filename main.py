@@ -4,7 +4,7 @@ from typing import Optional, Callable
 from agents.agent_MCTS.gen_move import generate_move_MCTS
 from agents.agent_alphafour.self_play import MCTS_self_play
 from agents.agent_alphafour.evaluator import evaluate_NN
-from agents.agent_alphafour.neural import trainNN
+from agents.agent_alphafour.trainNN import trainNN
 from agents.common import PlayerAction, BoardPiece
 from agents.helpers import SavedState, GenMove
 from agents.agent_alphafour import generate_move_alphafour
