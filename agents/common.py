@@ -1,5 +1,4 @@
 ### CODE BY EMIL BALITZKI ###
-import functools
 from typing import Optional
 import numpy as np
 from numba import njit
@@ -95,101 +94,145 @@ def string_to_board(pp_board: str) -> np.ndarray:
 
 @njit()  # Decorator for making the compiled code faster
 def apply_player_action(
-        board: np.ndarray, action: PlayerAction, player: BoardPiece, copy: bool = False
+        board: np.ndarray, column: PlayerAction, player: BoardPiece, copy: bool = False
 ) -> np.ndarray:
     """
     Sets board[i, action] = player, where i is the lowest open row. The modified
     board is returned. If copy is True, makes a copy of the board before modifying it.
+
+    :param board: the board to be modified
+    :param column: the column where the piece will be placed
+    :param player: the player piece which will be placed
+    :param copy: if the move should be done on the new copy of the board
+    :return: modified_board
     """
+    # Check if to copy
     if copy:
         board = board.copy()
-
-    coord = get_coords(board, action)
-    if not copy:
-        global lastmove
-        lastmove = action
-
-    board[coord[0], action] = player
+    # Check for exceptions
+    assert player == 1 or player == 2
+    assert 0 <= column <= 6
+    # Calculate how many pieces are already in the column
+    row = 0
+    for i in range(6):
+        if board[i][column] != NO_PLAYER:
+            row = row + 1
+    # If the column is already full, return unmodified board
+    if row == 6:
+        return board
+    # Add the new piece
+    board[5 - row][column] = player
     return board
 
 
-def get_coords(board: np.ndarray, piece: PlayerAction):
-    row = 0
-    while board[row, piece] != NO_PLAYER:
-
-        if row == 5:
-            break
-        row += 1
-
-    return [row, piece]
-
-
 @njit()  # Decorator for making the compiled code faster
-def connected_four(
-        board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
-) -> bool:
+def connected_four(board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None) -> bool:
     """
     Returns True if there are four adjacent pieces equal to `player` arranged
     in either a horizontal, vertical, or diagonal line. Returns False otherwise.
     If desired, the last action taken (i.e. last column played) can be provided
     for potential speed optimisation.
+
+    :param board: the board to be checked
+    :param player: the player piece for which it will check
+    :param last_action: optional last action (column) to optimize the search
+    :return: if_connected_four
     """
-
-    coords = get_coords(board, lastmove)
-    row = coords[0]
-    col = coords[1]
-    # The lambda reduces all diagonals returned by diagonal to a single truth value mapped over contains4
-    return contains4(board[row - 1], player) or contains4(board[:, col], player) or \
-           functools.reduce(lambda a, b: a or contains4(b, player), diagonal(board, lastmove, player), False)
-
-def diagonal(board: np.ndarray, piece: PlayerAction, player: BoardPiece):
-    coords = get_coords(board, piece)
-    col = piece
-    row = coords[0] - 1
-
-    flippedRow = 6 - row
-
-    # if col bigger than row then above main diag in this case do col - row. reverse in other case.
-    offset = col - row
-    offset2 = flippedRow - col
-
-    diag1 = board.diagonal(offset)
-    diag2 = np.fliplr(board).diagonal(offset2)
-
-    return [diag1, diag2]
-
-def contains4(boardSlice, player):
-    count = 0
-
-    for entry in boardSlice:
-
-        if entry == player:
-            count += 1
-        else:
-            # found a break in the line... resetting count
-            count = 0
-        if count == 4:
-            return True
-
+    # The ranges are defined in a form of a list and not range() function, due to the limitation od the numba njit.
+    horizontal_columns_range = [0, 1, 2, 3, 4, 5, 6]
+    vertical_columns_range = [0, 1, 2, 3, 4, 5, 6]
+    diagonal_left_columns_range = [3, 4, 5, 6]
+    diagonal_right_columns_range = [0, 1, 2, 3]
+    # Check if the last action option is not none and optimize the search
+    if last_action is not None:
+        vertical_columns_range = [np.int64(last_action)]  # Cut the range just to one column
+        # Filter out the columns which are further then 3 columns from the last action column
+        horizontal_columns_range = [col for col in horizontal_columns_range if abs(col - np.int64(last_action)) <= 3]
+        # Filter out the columns from original range which are further then 3 columns from the last action column
+        diagonal_left_columns_range = \
+            [col for col in diagonal_left_columns_range if abs(col - np.int64(last_action)) <= 3]
+        # Filter out the columns from original range which are further then 3 columns from the last action column
+        diagonal_right_columns_range = \
+            [col for col in diagonal_right_columns_range if abs(col - np.int64(last_action)) <= 3]
+    # Horizontal win
+    for row in [0, 1, 2, 3, 4, 5]:
+        pieces = 0
+        for column in horizontal_columns_range:
+            if board[row][column] == player:
+                pieces = pieces + 1
+                if pieces == 4:
+                    return True
+            else:
+                pieces = 0
+    # Vertical win
+    for column in vertical_columns_range:
+        pieces = 0
+        for row in [0, 1, 2, 3, 4, 5]:
+            if board[row][column] == player:
+                pieces = pieces + 1
+                if pieces == 4:
+                    return True
+            else:
+                pieces = 0
+    # Diagonal left
+    for row in [3, 4, 5]:
+        for column in diagonal_left_columns_range:
+            # Check if the first field is one from the looked player
+            if board[row][column] == player:
+                # Check for another 3 pieces
+                pieces = 1
+                for i in [1, 2, 3]:
+                    if board[row - i][column - i] == player:
+                        pieces = pieces + 1
+                    else:
+                        pieces = 1
+                    # Check if found 4 pieces
+                    if pieces == 4:
+                        return True
+    # Diagonal right
+    for row in [3, 4, 5]:
+        for column in diagonal_right_columns_range:
+            # Check if the first field is one from the looked player
+            if board[row][column] == player:
+                # Check for another 3 pieces
+                pieces = 1
+                for i in [1, 2, 3]:
+                    if board[row - i][column + i] == player:
+                        pieces = pieces + 1
+                    else:
+                        pieces = 1
+                    # Check if found 4 pieces
+                    if pieces == 4:
+                        return True
     return False
 
+
 def check_end_state(
-        board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
+        board, player: BoardPiece, last_action: Optional[PlayerAction] = None,
 ) -> GameState:
     """
     Returns the current game state for the current `player`, i.e. has their last
     action won (GameState.IS_WIN) or drawn (GameState.IS_DRAW) the game,
-    or is play still on-going (GameState.STILL_PLAYING)?
+    or is play still on-going (GameState.STILL_PLAYING).
+
+    :param board: the board to be checked
+    :param player: the player piece for which it will check
+    :param last_action: optional last action (column) to optimize the search
+    :return: game_state
     """
-    try:
-        if connected_four(board, player, lastmove):
-            return GameState.IS_WIN
-        if np.count_nonzero(board == 0) != 0:
-            return GameState.STILL_PLAYING
-        else:
-            return GameState.IS_DRAW
-    except NameError:
+    # If given player has connected four, game is won.
+    if connected_four(board, player, last_action):
+        return GameState.IS_WIN
+    # If no player won the game and there is at least one free space, game is still playing
+    elif (not connected_four(board, PLAYER1, last_action)) and (not connected_four(board, PLAYER2, last_action)) \
+            and (np.any(board == NO_PLAYER)):
         return GameState.STILL_PLAYING
+    # If nobody won and there are no spaces left, game is draw.
+    elif np.all(board != NO_PLAYER):
+        return GameState.IS_DRAW
+    # If rival won
+    else:
+        return GameState.IS_LOST
 
 
 def if_game_ended(board: np.ndarray, last_action: Optional[PlayerAction] = None) -> bool:
