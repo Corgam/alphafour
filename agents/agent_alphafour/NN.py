@@ -27,7 +27,6 @@ class Convblock(nn.Module):
 class ResBlock(nn.Module):
     def __init__(self, in_channels, out_channels, activation='relu'):
         super().__init__()
-        # self.expansion = 4
         self.in_channels, self.out_channels, self.activation = in_channels, out_channels, activation
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(out_channels)
