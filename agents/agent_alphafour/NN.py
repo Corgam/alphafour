@@ -59,25 +59,35 @@ class ResBlock(nn.Module):
 class FullBlock(nn.Module):
     def __init__(self):
         super(FullBlock, self).__init__()
-        # Value Head
-        self.conv_head = nn.Conv2d(42, 1, (3, 3), stride=(1, 1))
-        self.ln_head = nn.Linear(162, 1)
         # Policy Head
-        self.conv_policy = nn.Conv2d(42, 7, (3, 3), stride=(1, 1))
-        self.ln_policy = nn.Linear(1134, 7)
+        self.conv_policy = nn.Conv2d(6*7, 32, kernel_size=(1, 1))
+        self.bn_policy = nn.BatchNorm2d(32)
+        self.log_softmax = nn.LogSoftmax(1)
+        self.ln_policy = nn.Linear(32*6*7, 7)
+        # Value Head
+        self.conv_head = nn.Conv2d(42, 3, kernel_size=(1, 1))
+        self.bn_head = nn.BatchNorm2d(3)
+        self.ln_head = nn.Linear(3*6*7, 32)
+        self.ln2_head = nn.Linear(32, 1)
 
     def forward(self, value):
-        # Value dim (1,42,10,11)
-        value_head = self.conv_head(value)
-        # value_head = F.relu(value_head)
-        value_head = value_head.view(1, 162)
-        value_head = self.ln_head(value_head)
-
-        policy_head = self.conv_policy(value)  # Dim (1,7,8,9)
-        policy_head = policy_head.view(1, 1134)
+        # Input value dim (1,42,6,7)
+        # Policy head part
+        policy_head = self.conv_policy(value)
+        policy_head = self.bn_policy(policy_head)
+        policy_head = F.relu(policy_head)
+        policy_head = policy_head.view(1, 32*6*7)
         policy_head = self.ln_policy(policy_head)
-        policy_head = torch.softmax(policy_head, dim=1)
-
+        policy_head = self.log_softmax(policy_head).exp()
+        # Value head part
+        value_head = self.conv_head(value)
+        value_head = self.bn_head(value_head)
+        value_head = F.relu(value_head)
+        value_head = value_head.view(-1, 3*6*7)
+        value_head = self.ln_head(value_head)
+        value_head = F.relu(value_head)
+        value_head = self.ln2_head(value_head)
+        value_head = torch.tanh(value_head)
         return policy_head, value_head
 
 
