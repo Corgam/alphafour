@@ -5,7 +5,7 @@ import torch.cuda
 from from_root import from_root
 from torch.utils.data import DataLoader
 
-from agents.agent_alphafour.NN import AlphaNet, AlphaLossFunction
+from agents.agent_alphafour.NN import Alpha_Net, AlphaLossFunction
 
 
 def load_NN(NN, NN_iteration):
@@ -48,7 +48,7 @@ def trainNN(NN_iteration, learning_rate=0.001, ):
         with open(filename, 'rb') as f:
             dataset.extend(pickle.load(f, encoding='bytes'))
     # Train the NN
-    NN = AlphaNet()
+    NN = Alpha_Net()
     print("Training...")
     if torch.cuda.is_available():
         NN.cuda()

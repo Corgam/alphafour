@@ -8,9 +8,9 @@ from agents.common import string_to_board
 NUMBER_OF_RES_LAYERS = 1
 
 
-class Convblock(nn.Module):
+class Conv_Block(nn.Module):
     def __init__(self):
-        super(Convblock, self).__init__()
+        super(Conv_Block, self).__init__()
         self.bn = nn.BatchNorm2d(42)
         self.conv = nn.Conv2d(1, 42, kernel_size=(3, 3), stride=(1, 1), padding=1)
 
@@ -24,7 +24,7 @@ class Convblock(nn.Module):
         return temp
 
 
-class ResBlock(nn.Module):
+class Res_Block(nn.Module):
     def __init__(self, in_channels, out_channels, activation='relu'):
         super().__init__()
         self.in_channels, self.out_channels, self.activation = in_channels, out_channels, activation
@@ -55,9 +55,9 @@ class ResBlock(nn.Module):
         return value
 
 
-class FullBlock(nn.Module):
+class Full_Block(nn.Module):
     def __init__(self):
-        super(FullBlock, self).__init__()
+        super(Full_Block, self).__init__()
         # Policy Head
         self.conv_policy = nn.Conv2d(6*7, 32, kernel_size=(1, 1))
         self.bn_policy = nn.BatchNorm2d(32)
@@ -90,7 +90,7 @@ class FullBlock(nn.Module):
         return policy_head, value_head
 
 
-class AlphaNet(torch.nn.Module):
+class Alpha_Net(torch.nn.Module):
     """
     Main class for the deep convolutional residual neural network for the connect four agent.
     Consists of one convolutional layer, followed by NUMBER_OF_RES_LAYERS residual layers and a fully connected layer
@@ -98,10 +98,10 @@ class AlphaNet(torch.nn.Module):
     """
 
     def __init__(self) -> None:
-        super(AlphaNet, self).__init__()
-        self.convLayer = Convblock()
-        self.resLayers = [ResBlock(42, 42)] * NUMBER_OF_RES_LAYERS
-        self.fullLayer = FullBlock()
+        super(Alpha_Net, self).__init__()
+        self.convLayer = Conv_Block()
+        self.resLayers = [Res_Block(42, 42)] * NUMBER_OF_RES_LAYERS
+        self.fullLayer = Full_Block()
 
     # Parameters
 
@@ -127,7 +127,7 @@ class AlphaLossFunction(torch.nn.Module):
 
 
 if __name__ == "__main__":
-    net = AlphaNet()
+    net = Alpha_Net()
     board = string_to_board("""
     |==============|
     |    X         |
