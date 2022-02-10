@@ -37,13 +37,13 @@ def MCTS_self_play(board: np.ndarray = initialize_game_state(), player: BoardPie
         value = 0
         # Play the game
         while state.get_possible_moves():
+            # TODO: Game does not end when there is end of the game, but lasts until the end. Should it be fixed?
             print(pretty_print_board(state.board))
             if state.player_just_moved == 1:
                 move, root_node = run_AlphaFour(state, 1000)
             else:
                 move, root_node = run_AlphaFour(state, 100)
             policy = calculatePolicy(root_node)
-            # TODO: Encode the board to fit NN
             dataset_not_finished.append([state.board.copy(), policy])
             # Make the move
             print("Move: " + str(move) + "\n")

@@ -193,10 +193,10 @@ def get_NN_outputs(NN: Alpha_Net, node: Node):
     :param node:
     :return:
     """
-    # TODO: Implement the real NN
-    # child_priorities = [0.2, 0.1, 0.3, 0.18, 0.11, 0.01, 0.5]
-    # value_estimate = 0.4
     child_priorities, value_estimate = NN(node.state.board)
+    child_priorities = child_priorities.detach().cpu().numpy()  # Change to numpy ndarray
+    child_priorities = child_priorities.reshape(-1)  # Delete one dimension
+    value_estimate = value_estimate.item()
     return child_priorities, value_estimate
 
 
@@ -243,9 +243,10 @@ def run_AlphaFour(root_state: Connect4State, simulation_no=100, NN_iteration=0):
         torch.save({"state_dict": NN.state_dict()}, NN_filename)
         print(f"Created new {NN_filename} neural network.")
     # Turn on CUDA
-    if torch.cuda.is_available():
-        NN.cuda()
+    # device = torch.device('cuda')if torch.cuda.is_available() else torch.device('cpu')
+    # NN.to(device)
     print("Started MCTS...")
     with torch.no_grad():
-        run_single_MCTS(root_state, simulation_no, NN)
+        move, root_node = run_single_MCTS(root_state, simulation_no, NN)
     print("MCTS has finished!")
+    return move, root_node

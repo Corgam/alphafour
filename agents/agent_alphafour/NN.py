@@ -15,9 +15,6 @@ class Conv_Block(nn.Module):
         self.conv = nn.Conv2d(1, 42, kernel_size=(3, 3), stride=(1, 1), padding=1)
 
     def forward(self, value):
-        value = torch.from_numpy(value)
-        value = value.type(torch.FloatTensor)
-
         temp = self.conv(value)  # Apply Convolution
         temp = self.bn(temp)  # Applies Batch Normalization - normalize the mean and variance of data
         temp = F.relu(temp)  # Replaces are negative numbers with 0 -> max(0,x)
@@ -25,9 +22,8 @@ class Conv_Block(nn.Module):
 
 
 class Res_Block(nn.Module):
-    def __init__(self, in_channels, out_channels, activation='relu'):
+    def __init__(self, in_channels, out_channels):
         super().__init__()
-        self.in_channels, self.out_channels, self.activation = in_channels, out_channels, activation
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
@@ -106,15 +102,20 @@ class Alpha_Net(torch.nn.Module):
     # Parameters
 
     # Methods
-    def forward(self, values):
-        # values is board with dims (6,7)
-        expanded_values1 = np.expand_dims(values, 0)  # Dims (1,6,7)
-        expanded_values2 = np.expand_dims(expanded_values1, 1)  # Dims (1,1,6,7)
-        values = self.convLayer(expanded_values2)  # Dims (1,42,6,7)
+    def forward(self, value):
+        # Input values is board with dims (6,7)
+        # Change the dimensions of the tensor to 4D
+        value = np.expand_dims(value, 0)  # Dims (1,6,7)
+        value = np.expand_dims(value, 1)  # Dims (1,1,6,7)
+        # Change the type of the tensor
+        value = torch.from_numpy(value).float()
+        # dev = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        # value = value.to(dev)
+        value = self.convLayer(value)  # Dims (1,42,6,7)
         for res_layer in self.resLayers:
-            values = res_layer(values)
-        values = self.fullLayer(values)
-        return values
+            value = res_layer(value)
+        value = self.fullLayer(value)
+        return value
 
 
 class AlphaLossFunction(torch.nn.Module):

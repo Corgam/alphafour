@@ -50,8 +50,10 @@ def trainNN(NN_iteration, learning_rate=0.001, ):
     # Train the NN
     NN = Alpha_Net()
     print("Training...")
-    if torch.cuda.is_available():
-        NN.cuda()
+    # Turn on CUDA if avaiable
+    dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    NN.to(dev)
+    # Create optimizer and scheduler
     optimizer = torch.optim.Adam(NN.parameters(), lr=learning_rate, betas=(0.8, 0.999))
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 100, 150, 200, 250, 300, 400],
                                                      gamma=0.77)
