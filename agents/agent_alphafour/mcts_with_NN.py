@@ -194,9 +194,9 @@ def get_NN_outputs(NN: AlphaNet, node: Node):
     :return:
     """
     # TODO: Implement the real NN
-    child_priorities = [0.2, 0.1, 0.3, 0.18, 0.11, 0.01, 0.5]
-    value_estimate = 0.4
-    # child_priorities, value_estimate = NN(node.state.board)
+    # child_priorities = [0.2, 0.1, 0.3, 0.18, 0.11, 0.01, 0.5]
+    # value_estimate = 0.4
+    child_priorities, value_estimate = NN(node.state.board)
     return child_priorities, value_estimate
 
 
