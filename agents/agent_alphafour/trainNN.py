@@ -1,11 +1,27 @@
 import os
 import pickle
 
+import numpy as np
 import torch.cuda
 from from_root import from_root
 from torch.utils.data import DataLoader
+from torch.utils.data import Dataset
+from torch.nn.utils import clip_grad_norm_
 
 from agents.agent_alphafour.NN import Alpha_Net, AlphaLossFunction
+
+
+class board_dataset(Dataset):
+    def __init__(self, dataset):  # dataset = np.array of (s, p, v)
+        self.boards = [data[0] for data in dataset]
+        self.policies = [data[1] for data in dataset]
+        self.values = [data[2] for data in dataset]
+
+    def __len__(self):
+        return len(self.boards)
+
+    def __getitem__(self, idx):
+        return np.int64(self.boards[idx]), self.policies[idx], self.values[idx]
 
 
 def load_NN(NN, NN_iteration):
@@ -19,24 +35,32 @@ def load_NN(NN, NN_iteration):
     return start_epoch
 
 
-def train(NN, dataset, optimizer, scheduler, num_of_epochs=300):
+def train(NN, dataset, optimizer, scheduler, start_epoch, num_of_epochs=300):
     torch.manual_seed(0)
     # Turn on training mode
     NN.train()
     # Choose criteria
     criteria = AlphaLossFunction()
     # Load train set
-    training_loader = DataLoader()
+    training_set = board_dataset(dataset)
+    training_loader = DataLoader(training_set, batch_size=32, shuffle=True)
     for epoch in range(0, num_of_epochs):
-        total_loss = 0.0
-        losses_per_batch = []
         for i, data in enumerate(training_loader, 0):
             state, policy, value = data
+            state = state.float()
+            policy = policy.float()
+            value = value.float()
             # Feed the NN
+            # TODO: Problem with dimensions
             policy_prediction, value_prediction = NN(state)
-            loss = criteria()
+            # Calculate the loss
+            loss = criteria(value_prediction[:, 0], value, policy_prediction, policy)
+            loss.backward()
+            clip_grad_norm_(NN.parameters(), 1.0)
+            # Forward the optimizer
+            optimizer.step()
+            optimizer.zero_grad()
         scheduler.step()
-        # TODO: Do more
 
 
 def trainNN(NN_iteration, learning_rate=0.001, ):
@@ -50,15 +74,14 @@ def trainNN(NN_iteration, learning_rate=0.001, ):
     # Train the NN
     NN = Alpha_Net()
     print("Training...")
-    # Turn on CUDA if avaiable
-    dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    NN.to(dev)
+    # Turn on CUDA if available
+    # dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    # NN.to(dev)
     # Create optimizer and scheduler
     optimizer = torch.optim.Adam(NN.parameters(), lr=learning_rate, betas=(0.8, 0.999))
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 100, 150, 200, 250, 300, 400],
                                                      gamma=0.77)
     # Load state
-    load_NN(NN, NN_iteration)
+    start_epoch = load_NN(NN, NN_iteration)
     # Train
-    train(NN, dataset, optimizer, scheduler)
-
+    train(NN, dataset, optimizer, scheduler, start_epoch)

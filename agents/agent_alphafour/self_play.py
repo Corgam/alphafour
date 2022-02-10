@@ -16,9 +16,13 @@ def calculatePolicy(node: Node):
     :return:
     """
     sumVisits = 0
+    policy = np.zeros([7], np.float32)
+    # Calculate the overall number of visits.
     for child in node.children:
         sumVisits += child.visits
-    policy = [child.visits / sumVisits for child in node.children]
+    # Calculate all values (for full columns, leave 0)
+    for child in node.children:
+        policy[child.parent_move] = child.visits / sumVisits
     return policy
 
 

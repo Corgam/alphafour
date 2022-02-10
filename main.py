@@ -100,7 +100,7 @@ def main_pipeline(iterations=100):
         # Run the self-play MCTS and generate the data
         MCTS_self_play()
         # Train the NN with data from MCTS
-        trainNN()
+        trainNN(NN_iteration=0)
         if i > 0:
             better_NN = evaluate_NN()
             # TODO: If the new NN does not win, train it more.
