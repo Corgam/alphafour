@@ -71,7 +71,7 @@ class Full_Block(nn.Module):
         policy_head = self.conv_policy(value)
         policy_head = self.bn_policy(policy_head)
         policy_head = F.relu(policy_head)
-        policy_head = policy_head.view(1, 32*6*7)
+        policy_head = policy_head.view(-1, 32*6*7)
         policy_head = self.ln_policy(policy_head)
         policy_head = self.log_softmax(policy_head).exp()
         # Value head part
@@ -104,11 +104,6 @@ class Alpha_Net(torch.nn.Module):
     # Methods
     def forward(self, value):
         # Input values is board with dims (6,7)
-        # Change the dimensions of the tensor to 4D
-        value = np.expand_dims(value, 0)  # Dims (1,6,7)
-        value = np.expand_dims(value, 1)  # Dims (1,1,6,7)
-        # Change the type of the tensor
-        value = torch.from_numpy(value).float()
         # dev = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         # value = value.to(dev)
         value = self.convLayer(value)  # Dims (1,42,6,7)

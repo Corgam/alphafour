@@ -193,7 +193,16 @@ def get_NN_outputs(NN: Alpha_Net, node: Node):
     :param node:
     :return:
     """
-    child_priorities, value_estimate = NN(node.state.board)
+    # Prepare the board
+    board = node.state.board
+    # Change the dimensions of the tensor to 4D
+    board = np.expand_dims(board, 0)  # Dims (1,6,7)
+    board = np.expand_dims(board, 1)  # Dims (1,1,6,7)
+    # Change the type of the tensor
+    board = torch.from_numpy(board).float()
+    # Get values from the NN
+    child_priorities, value_estimate = NN(board)
+    # Unpack the values
     child_priorities = child_priorities.detach().cpu().numpy()  # Change to numpy ndarray
     child_priorities = child_priorities.reshape(-1)  # Delete one dimension
     value_estimate = value_estimate.item()
@@ -238,15 +247,13 @@ def run_AlphaFour(root_state: Connect4State, simulation_no=100, NN_iteration=0):
     if os.path.isfile(NN_filename):
         loaded_NN = torch.load(NN_filename)
         NN.load_state_dict(loaded_NN["state_dict"])
-        print(f"Loaded {NN_filename} neural network.")
+        #  print(f"Loaded {NN_filename} neural network.")
     else:
         torch.save({"state_dict": NN.state_dict()}, NN_filename)
-        print(f"Created new {NN_filename} neural network.")
+        #  print(f"Created new {NN_filename} neural network.")
     # Turn on CUDA
     # device = torch.device('cuda')if torch.cuda.is_available() else torch.device('cpu')
     # NN.to(device)
-    print("Started MCTS...")
     with torch.no_grad():
         move, root_node = run_single_MCTS(root_state, simulation_no, NN)
-    print("MCTS has finished!")
     return move, root_node

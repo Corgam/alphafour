@@ -35,7 +35,7 @@ def load_NN(NN, NN_iteration):
     return start_epoch
 
 
-def train(NN, dataset, optimizer, scheduler, start_epoch, num_of_epochs=300):
+def train(NN, dataset, optimizer, scheduler, num_of_epochs=300):
     torch.manual_seed(0)
     # Turn on training mode
     NN.train()
@@ -51,7 +51,8 @@ def train(NN, dataset, optimizer, scheduler, start_epoch, num_of_epochs=300):
             policy = policy.float()
             value = value.float()
             # Feed the NN
-            # TODO: Problem with dimensions
+            state = np.expand_dims(state, 1)
+            state = torch.from_numpy(state)
             policy_prediction, value_prediction = NN(state)
             # Calculate the loss
             loss = criteria(value_prediction[:, 0], value, policy_prediction, policy)
@@ -63,14 +64,16 @@ def train(NN, dataset, optimizer, scheduler, start_epoch, num_of_epochs=300):
         scheduler.step()
 
 
-def trainNN(NN_iteration, learning_rate=0.001, ):
+def trainNN(iteration, NN_iteration, learning_rate=0.001):
+    print("Started training!")
     # Load saved data
     dataset = []
-    data_path = "agents/agent_alphafour/training_data/"
+    data_path = f"agents/agent_alphafour/training_data/iteration{iteration}/"
     for i, file in enumerate(os.listdir(data_path)):
         filename = os.path.join(data_path, file)
         with open(filename, 'rb') as f:
-            dataset.extend(pickle.load(f, encoding='bytes'))
+            data = pickle.load(f, encoding='bytes')
+            dataset.extend(data)
     # Train the NN
     NN = Alpha_Net()
     print("Training...")
@@ -82,6 +85,7 @@ def trainNN(NN_iteration, learning_rate=0.001, ):
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 100, 150, 200, 250, 300, 400],
                                                      gamma=0.77)
     # Load state
-    start_epoch = load_NN(NN, NN_iteration)
+    load_NN(NN, NN_iteration)
     # Train
-    train(NN, dataset, optimizer, scheduler, start_epoch)
+    train(NN, dataset, optimizer, scheduler)
+    print("Finished training!")
