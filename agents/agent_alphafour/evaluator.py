@@ -39,21 +39,26 @@ class Match:
         for i in range(number_of_games):
             print(f"[EVALUATOR] Starting {i} round!")
             with torch.no_grad():
-                winner = self.play_round()
+                winner = self.play_round(i)
             if winner == "current":
                 wins += 1
         save_file("wins_ratio", {"ratio": wins / number_of_games, "number_of_games": number_of_games})
         print(f"[EVALUATOR] Finished NN Match with ratio {wins / number_of_games} from {number_of_games} total games!")
 
-    def play_round(self):
-        # TODO: Randomize the player
-        who_starts = random.choice([""])
+    def play_round(self, iteration_number: int):
         starting_player = PLAYER1
         state = Connect4State(initialize_game_state(), starting_player)
-        first_player_NN = self.current_NN
-        second_player_NN = self.best_NN
-        first_player = "current"
-        second_player = "best"
+        if iteration_number % 2 == 0:
+            first_player_NN = self.current_NN
+            second_player_NN = self.best_NN
+            first_player = "current"
+            second_player = "best"
+        else:
+            first_player_NN = self.best_NN
+            second_player_NN = self.current_NN
+            first_player = "best"
+            second_player = "current"
+
         # Play the game
         while state.get_possible_moves() and if_game_ended(state.board) is False:
             #  print(pretty_print_board(state.board))
