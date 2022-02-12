@@ -26,7 +26,7 @@ def calculatePolicy(node: Node):
     return policy
 
 
-def save_into_file(filename, dataset_finished: list, iteration):
+def save_file(filename, dataset_finished: list, iteration):
     if not os.path.exists(f"agents/agent_alphafour/training_data/iteration{iteration}/"):
         os.makedirs(f"agents/agent_alphafour/training_data/iteration{iteration}/")
     full_path = os.path.join(f"agents/agent_alphafour/training_data/iteration{iteration}/", filename)
@@ -35,7 +35,7 @@ def save_into_file(filename, dataset_finished: list, iteration):
 
 
 def MCTS_self_play(iteration, board: np.ndarray = initialize_game_state(), player: BoardPiece = PLAYER1,
-                   number_of_games: int = 10):
+                   number_of_games: int = 10, start_iter: int = 0):
     starting_state = Connect4State(board, player)
     for game in range(number_of_games):
         print(f"Started playing MCTS game number: {game}")
@@ -48,7 +48,7 @@ def MCTS_self_play(iteration, board: np.ndarray = initialize_game_state(), playe
         while state.get_possible_moves() and if_game_ended(state.board) is False:
             #  print(pretty_print_board(state.board))
             if state.player_just_moved == 1:
-                move, root_node = run_AlphaFour(state, 1000)
+                move, root_node = run_AlphaFour(state, 100)
             else:
                 move, root_node = run_AlphaFour(state, 100)
             policy = calculatePolicy(root_node)
@@ -74,4 +74,4 @@ def MCTS_self_play(iteration, board: np.ndarray = initialize_game_state(), playe
                 dataset_finished.append([loaded_board, loaded_policy, value])
         timeStr = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
         print(f"Finished playing MCTS game number: {game}. Saving results...")
-        save_into_file(f"data_game{game}_" + timeStr + ".pkl", dataset_finished, iteration)
+        save_file(f"data_game{game}_" + timeStr + ".pkl", dataset_finished, iteration)

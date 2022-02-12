@@ -24,8 +24,8 @@ class board_dataset(Dataset):
         return np.int64(self.boards[idx]), self.policies[idx], self.values[idx]
 
 
-def load_NN(NN, NN_iteration):
-    NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{NN_iteration}.pth.tar")
+def load_NN(NN, iteration):
+    NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{iteration}.pth.tar")
     start_epoch = 0
     loaded_NN = None
     if os.path.isfile(NN_filename):
@@ -35,7 +35,7 @@ def load_NN(NN, NN_iteration):
     return start_epoch
 
 
-def train(NN, dataset, optimizer, scheduler, num_of_epochs=300):
+def train(NN, dataset, optimizer, scheduler, num_of_epochs, iteration):
     torch.manual_seed(0)
     # Turn on training mode
     NN.train()
@@ -62,10 +62,17 @@ def train(NN, dataset, optimizer, scheduler, num_of_epochs=300):
             optimizer.step()
             optimizer.zero_grad()
         scheduler.step()
+        # Save the NN
+        NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{iteration + 1}.pth.tar")
+        torch.save({
+            "epoch": epoch + 1,
+            "state_dict": NN.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "scheduler": scheduler.state_dict()
+        }, NN_filename)
 
 
-def trainNN(iteration, NN_iteration, learning_rate=0.001):
-    print("Started training!")
+def trainNN(iteration, num_of_epochs, learning_rate=0.001):
     # Load saved data
     dataset = []
     data_path = f"agents/agent_alphafour/training_data/iteration{iteration}/"
@@ -76,7 +83,6 @@ def trainNN(iteration, NN_iteration, learning_rate=0.001):
             dataset.extend(data)
     # Train the NN
     NN = Alpha_Net()
-    print("Training...")
     # Turn on CUDA if available
     # dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     # NN.to(dev)
@@ -85,7 +91,7 @@ def trainNN(iteration, NN_iteration, learning_rate=0.001):
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 100, 150, 200, 250, 300, 400],
                                                      gamma=0.77)
     # Load state
-    load_NN(NN, NN_iteration)
+    load_NN(NN, iteration)
     # Train
-    train(NN, dataset, optimizer, scheduler)
+    train(NN, dataset, optimizer, scheduler, num_of_epochs, iteration)
     print("Finished training!")
