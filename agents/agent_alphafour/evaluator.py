@@ -1,10 +1,11 @@
 import os
 import pickle
+import random
 
 import torch
 from from_root import from_root
 
-from agents.agent_alphafour.NN import Alpha_Net
+from agents.agent_alphafour.NN import AlphaNet
 from agents.agent_alphafour.mcts_with_NN import Connect4State, run_single_MCTS
 from agents.common import initialize_game_state, if_game_ended
 from agents.helpers import PLAYER1, GameState
@@ -46,6 +47,7 @@ class Match:
 
     def play_round(self):
         # TODO: Randomize the player
+        who_starts = random.choice([""])
         starting_player = PLAYER1
         state = Connect4State(initialize_game_state(), starting_player)
         first_player_NN = self.current_NN
@@ -76,8 +78,8 @@ def evaluate_NN(best_NN_id, current_NN_id, number_of_games):
     # Prepare filenames for NNs
     best_NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{best_NN_id}.pth.tar")
     current_NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{current_NN_id}.pth.tar")
-    best_NN = Alpha_Net()
-    current_NN = Alpha_Net()
+    best_NN = AlphaNet()
+    current_NN = AlphaNet()
     best_NN.eval()
     current_NN.eval()
     # Load the current NN

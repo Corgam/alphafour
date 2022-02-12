@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 from torch.nn.utils import clip_grad_norm_
 
-from agents.agent_alphafour.NN import Alpha_Net, AlphaLossFunction
+from agents.agent_alphafour.NN import AlphaNet, AlphaLossFunction
 
 
 class board_dataset(Dataset):
@@ -43,7 +43,7 @@ def train(NN, dataset, optimizer, scheduler, num_of_epochs, iteration):
     criteria = AlphaLossFunction()
     # Load train set
     training_set = board_dataset(dataset)
-    training_loader = DataLoader(training_set, batch_size=32, shuffle=True)
+    training_loader = DataLoader(training_set, batch_size=1, shuffle=True)
     for epoch in range(0, num_of_epochs):
         for i, data in enumerate(training_loader, 0):
             state, policy, value = data
@@ -83,7 +83,7 @@ def trainNN(iteration, num_of_epochs, learning_rate=0.001):
             data = pickle.load(f, encoding='bytes')
             dataset.extend(data)
     # Train the NN
-    NN = Alpha_Net()
+    NN = AlphaNet()
     # Turn on CUDA if available
     # dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     # NN.to(dev)
