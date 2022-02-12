@@ -55,7 +55,7 @@ def train(NN, dataset, optimizer, scheduler, num_of_epochs, iteration):
             state = torch.from_numpy(state)
             policy_prediction, value_prediction = NN(state)
             # Calculate the loss
-            loss = criteria(value_prediction[:, 0], value, policy_prediction, policy)
+            loss = criteria(value_prediction[:, 0], value)
             loss.backward()
             clip_grad_norm_(NN.parameters(), 1.0)
             # Forward the optimizer
