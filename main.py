@@ -5,7 +5,7 @@ from agents.agent_MCTS.gen_move import generate_move_MCTS
 from agents.agent_alphafour.self_play import MCTS_self_play
 from agents.agent_alphafour.evaluator import evaluate_NN
 from agents.agent_alphafour.trainNN import trainNN
-from agents.common import PlayerAction, BoardPiece
+from agents.common import PlayerAction, BoardPiece, initialize_game_state
 from agents.helpers import SavedState, GenMove
 from agents.agent_alphafour import generate_move_alphafour
 
@@ -90,17 +90,22 @@ def human_vs_agent(
                     break
 
 
-def main_pipeline(iterations=100):
+NUMBER_OF_ITERATIONS = 2
+NUMBER_OF_MCTS_GAMES_PER_ITERATION = 2
+
+
+def main_pipeline(iterations):
     """
     Runs the main pipeline of AlphaFour
     :param iterations:
     :return:
     """
     for i in range(iterations):
+        print(f"Started {i} iteration.")
         # Run the self-play MCTS and generate the data
-        MCTS_self_play()
+        MCTS_self_play(iteration=i, board=initialize_game_state(), number_of_games=NUMBER_OF_MCTS_GAMES_PER_ITERATION)
         # Train the NN with data from MCTS
-        trainNN()
+        trainNN(iteration=i, NN_iteration=0)
         if i > 0:
             better_NN = evaluate_NN()
             # TODO: If the new NN does not win, train it more.
@@ -114,7 +119,7 @@ if __name__ == "__main__":
     print("4. Play Human vs. MCTS Agent")
     agent = input("Please type the number to choose the agent:")
     if agent == "1":
-        main_pipeline()
+        main_pipeline(NUMBER_OF_ITERATIONS)
     elif agent == "2":
         human_vs_agent(user_move)
     elif agent == "3":
