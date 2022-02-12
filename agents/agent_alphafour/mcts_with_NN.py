@@ -238,7 +238,7 @@ def run_single_MCTS(root_state: Connect4State, simulation_no: int, NN: AlphaNet)
     return root_node.children[np.argmax(children_visits)].parent_move, root_node
 
 
-def run_AlphaFour(root_state: Connect4State, simulation_no=100, NN_iteration=0):
+def run_AlphaFour(root_state: Connect4State, simulation_no, NN_iteration):
     # Create the NN
     NN = AlphaNet()
     NN.eval()  # Turn on the evaluation mode

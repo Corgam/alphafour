@@ -34,8 +34,8 @@ def save_file(filename, dataset_finished: list, iteration):
         pickle.dump(dataset_finished, file)
 
 
-def MCTS_self_play(iteration, board: np.ndarray = initialize_game_state(), player: BoardPiece = PLAYER1,
-                   number_of_games: int = 10, start_iter: int = 0):
+def MCTS_self_play(iteration, board: np.ndarray, player: BoardPiece, number_of_simulations,
+                   number_of_games: int, start_iter: int):
     print("[MCTS] Started MCTS plays!")
     starting_state = Connect4State(board, player)
     for game in range(number_of_games):
@@ -49,9 +49,9 @@ def MCTS_self_play(iteration, board: np.ndarray = initialize_game_state(), playe
         while state.get_possible_moves() and if_game_ended(state.board) is False:
             #  print(pretty_print_board(state.board))
             if state.player_just_moved == 1:
-                move, root_node = run_AlphaFour(state, 100)
+                move, root_node = run_AlphaFour(state, number_of_simulations, iteration)
             else:
-                move, root_node = run_AlphaFour(state, 100)
+                move, root_node = run_AlphaFour(state, number_of_simulations, iteration)
             policy = calculatePolicy(root_node)
             dataset_not_finished.append([state.board.copy(), policy])
             # Make the move

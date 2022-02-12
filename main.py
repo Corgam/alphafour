@@ -11,7 +11,7 @@ from agents.agent_alphafour.self_play import MCTS_self_play
 from agents.agent_alphafour.evaluator import evaluate_NN
 from agents.agent_alphafour.trainNN import trainNN
 from agents.common import PlayerAction, BoardPiece, initialize_game_state
-from agents.helpers import SavedState, GenMove
+from agents.helpers import SavedState, GenMove, PLAYER1
 from agents.agent_alphafour import generate_move_alphafour
 
 
@@ -117,7 +117,8 @@ def main_pipeline():
     for iteration in range(NUMBER_OF_ITERATIONS):
         print(f"[PIPELINE] Started {iteration} iteration.")
         # Run the self-play MCTS and generate the data
-        MCTS_self_play(iteration=iteration, board=initialize_game_state(),
+        MCTS_self_play(iteration=iteration, board=initialize_game_state(), player=PLAYER1,
+                       number_of_simulations=NUMBER_OF_MCTS_SIMULATIONS,
                        number_of_games=NUMBER_OF_MCTS_GAMES_PER_ITERATION, start_iter=0)
         # Train the NN with data from MCTS
         trainNN(iteration=iteration, num_of_epochs=NUMBER_OF_TRAINING_EPOCHS)
@@ -130,6 +131,8 @@ def main_pipeline():
                 print("[PIPELINE] New NN not strong enough! More training needs to be done...")
                 MCTS_self_play(iteration=iteration, board=initialize_game_state(),
                                number_of_games=NUMBER_OF_MCTS_GAMES_PER_ITERATION,
+                               number_of_simulations=NUMBER_OF_MCTS_SIMULATIONS,
+                               player=PLAYER1,
                                start_iter=(additional_runs + 1) * NUMBER_OF_MCTS_GAMES_PER_ITERATION)
                 trainNN(iteration=iteration, num_of_epochs=NUMBER_OF_TRAINING_EPOCHS)
                 better_NN = evaluate_NN(iteration, iteration + 1, number_of_games=NUMBER_OF_GAMES_PER_EVALUATION)
