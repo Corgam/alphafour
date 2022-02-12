@@ -106,6 +106,14 @@ def main_pipeline():
     """
     Runs the main pipeline of AlphaFour, given number of times.
     """
+    # Create folders
+    if not os.path.exists(f"agents/agent_alphafour/trained_NN/"):
+        os.makedirs(f"agents/agent_alphafour/trained_NN/")
+    if not os.path.exists(f"agents/agent_alphafour/training_data/"):
+        os.makedirs(f"agents/agent_alphafour/training_data/")
+    if not os.path.exists(f"agents/agent_alphafour/evaluation_data/"):
+        os.makedirs(f"agents/agent_alphafour/evaluation_data/")
+    # Run the iterations
     for iteration in range(NUMBER_OF_ITERATIONS):
         print(f"[PIPELINE] Started {iteration} iteration.")
         # Run the self-play MCTS and generate the data
@@ -145,10 +153,10 @@ if __name__ == "__main__":
         data_path = f"agents/agent_alphafour/trained_NN/"
         number_of_iterations = len(os.listdir(data_path))
         print(f"Choose the iteration of the AlphaFour from 0 to {number_of_iterations - 1}")
-        iteration = input("Chosen iteration:")
+        it = input("Chosen iteration:")
         filePath = from_root("chosen_iteration.pkl")
         with open(filePath, "wb") as f:
-            pickle.dump({"iteration": iteration}, f)
+            pickle.dump({"iteration": it}, f)
         human_vs_agent(generate_move_alphafour)
     elif agent == "4":
         human_vs_agent(generate_move_MCTS)
