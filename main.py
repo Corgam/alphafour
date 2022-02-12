@@ -106,6 +106,14 @@ def main_pipeline():
     """
     Runs the main pipeline of AlphaFour, given number of times.
     """
+    # Create folders
+    if not os.path.exists(f"agents/agent_alphafour/trained_NN/"):
+        os.makedirs(f"agents/agent_alphafour/trained_NN/")
+    if not os.path.exists(f"agents/agent_alphafour/training_data/"):
+        os.makedirs(f"agents/agent_alphafour/training_data/")
+    if not os.path.exists(f"agents/agent_alphafour/evaluation_data/"):
+        os.makedirs(f"agents/agent_alphafour/evaluation_data/")
+    # Run the iterations
     for iteration in range(NUMBER_OF_ITERATIONS):
         print(f"[PIPELINE] Started {iteration} iteration.")
         # Run the self-play MCTS and generate the data
