@@ -5,7 +5,7 @@ import torch
 from from_root import from_root
 
 from agents.agent_alphafour.NN import Alpha_Net
-from agents.agent_alphafour.mcts_with_NN import Connect4State, run_AlphaFour, run_single_MCTS
+from agents.agent_alphafour.mcts_with_NN import Connect4State, run_single_MCTS
 from agents.common import initialize_game_state, if_game_ended
 from agents.helpers import PLAYER1, GameState
 
@@ -21,7 +21,7 @@ def save_file(filename, data):
 def load_file(filename):
     if os.path.exists(f"agents/agent_alphafour/evaluation_data/"):
         full_path = os.path.join(f"agents/agent_alphafour/evaluation_data/", filename)
-        with open(full_path, "wb") as file:
+        with open(full_path, "rb") as file:
             data = pickle.load(file)
         return data
 
@@ -33,20 +33,21 @@ class Match:
         pass
 
     def solve(self, number_of_games: int):
-        print("Starting NN Match!")
+        print(F"[EVALUATOR] Starting NN Match with {number_of_games} total rounds!")
         wins = 0
         for i in range(number_of_games):
+            print(f"[EVALUATOR] Starting {i} round!")
             with torch.no_grad():
                 winner = self.play_round()
             if winner == "current":
                 wins += 1
         save_file("wins_ratio", {"ratio": wins / number_of_games, "number_of_games": number_of_games})
-        print("Finished NN Match!")
+        print(f"[EVALUATOR] Finished NN Match with ratio {wins / number_of_games} from {number_of_games} total games!")
 
     def play_round(self):
         # TODO: Randomize the player
-        state = Connect4State(initialize_game_state(), PLAYER1)
-        starting_player = state.player_just_moved
+        starting_player = PLAYER1
+        state = Connect4State(initialize_game_state(), starting_player)
         first_player_NN = self.current_NN
         second_player_NN = self.best_NN
         first_player = "current"
@@ -55,9 +56,9 @@ class Match:
         while state.get_possible_moves() and if_game_ended(state.board) is False:
             #  print(pretty_print_board(state.board))
             if state.player_just_moved == 1:
-                move, root_node = run_single_MCTS(state, 100, first_player_NN)
-            else:
                 move, root_node = run_single_MCTS(state, 100, second_player_NN)
+            else:
+                move, root_node = run_single_MCTS(state, 100, first_player_NN)
             # Make the move
             state.move(move)
         # Check who won
@@ -70,11 +71,11 @@ class Match:
             return None
 
 
-def evaluate_NN(best_NN, current_NN, number_of_games):
-    print("Started evaluating the NNs.")
+def evaluate_NN(best_NN_id, current_NN_id, number_of_games):
+    print("[EVALUATOR] Started evaluating the NNs.")
     # Prepare filenames for NNs
-    best_NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{best_NN}.pth.tar")
-    current_NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{current_NN}.pth.tar")
+    best_NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{best_NN_id}.pth.tar")
+    current_NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{current_NN_id}.pth.tar")
     best_NN = Alpha_Net()
     current_NN = Alpha_Net()
     best_NN.eval()
@@ -86,9 +87,11 @@ def evaluate_NN(best_NN, current_NN, number_of_games):
     best_NN.load_state_dict(loaded_NN["state_dict"])
     # Play the match
     match = Match(current_NN=current_NN, best_NN=best_NN)
-    Match.solve(number_of_games)
+    match.solve(number_of_games)
     ratio = load_file("wins_ratio")
-    if ratio.ratio >= 0.55:
-        return current_NN
+    if ratio["ratio"] >= 0.55:
+        print("[EVALUATOR] Finished evaluating. New network won!")
+        return current_NN_id
     else:
-        return best_NN
+        print("[EVALUATOR] Finished evaluating. New network lost!")
+        return best_NN_id

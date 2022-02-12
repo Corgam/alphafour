@@ -73,6 +73,7 @@ def train(NN, dataset, optimizer, scheduler, num_of_epochs, iteration):
 
 
 def trainNN(iteration, num_of_epochs, learning_rate=0.001):
+    print("[TRAINING] Started training!")
     # Load saved data
     dataset = []
     data_path = f"agents/agent_alphafour/training_data/iteration{iteration}/"
@@ -94,4 +95,4 @@ def trainNN(iteration, num_of_epochs, learning_rate=0.001):
     load_NN(NN, iteration)
     # Train
     train(NN, dataset, optimizer, scheduler, num_of_epochs, iteration)
-    print("Finished training!")
+    print("[TRAINING] Finished training!")

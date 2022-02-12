@@ -36,9 +36,10 @@ def save_file(filename, dataset_finished: list, iteration):
 
 def MCTS_self_play(iteration, board: np.ndarray = initialize_game_state(), player: BoardPiece = PLAYER1,
                    number_of_games: int = 10, start_iter: int = 0):
+    print("[MCTS] Started MCTS plays!")
     starting_state = Connect4State(board, player)
     for game in range(number_of_games):
-        print(f"Started playing MCTS game number: {game}")
+        print(f"[MCTS] Started playing MCTS game number: {game}")
         # Init variables
         state = starting_state.copy()
         dataset_not_finished = []
@@ -73,5 +74,5 @@ def MCTS_self_play(iteration, board: np.ndarray = initialize_game_state(), playe
             else:
                 dataset_finished.append([loaded_board, loaded_policy, value])
         timeStr = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
-        print(f"Finished playing MCTS game number: {game}. Saving results...")
+        print(f"[MCTS] Finished playing MCTS game number: {game}. Saving results...")
         save_file(f"data_game{game}_" + timeStr + ".pkl", dataset_finished, iteration)
