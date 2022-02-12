@@ -145,10 +145,10 @@ if __name__ == "__main__":
         data_path = f"agents/agent_alphafour/trained_NN/"
         number_of_iterations = len(os.listdir(data_path))
         print(f"Choose the iteration of the AlphaFour from 0 to {number_of_iterations - 1}")
-        iteration = input("Chosen iteration:")
+        it = input("Chosen iteration:")
         filePath = from_root("chosen_iteration.pkl")
         with open(filePath, "wb") as f:
-            pickle.dump({"iteration": iteration}, f)
+            pickle.dump({"iteration": it}, f)
         human_vs_agent(generate_move_alphafour)
     elif agent == "4":
         human_vs_agent(generate_move_MCTS)
