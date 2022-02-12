@@ -3,7 +3,7 @@
 # TODO: Test creation of the different layer types
 import torch
 
-from agents.agent_alphafour.NN import Alpha_Net
+from agents.agent_alphafour.NN import AlphaNet
 from agents.common import string_to_board
 from agents.helpers import PLAYER1
 

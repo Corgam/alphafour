@@ -7,7 +7,7 @@ import numpy as np
 import torch.cuda
 from from_root import from_root
 
-from agents.agent_alphafour.NN import Alpha_Net
+from agents.agent_alphafour.NN import AlphaNet
 from agents.common import apply_player_action, check_end_state, initialize_game_state, pretty_print_board
 from agents.helpers import calculate_possible_moves, get_rival_piece, PlayerAction, GameState, PLAYER1, BoardPiece
 
@@ -186,7 +186,7 @@ def backpropagate(node: Node, state: Connect4State, value_estimate):
         node = node.parent
 
 
-def get_NN_outputs(NN: Alpha_Net, node: Node):
+def get_NN_outputs(NN: AlphaNet, node: Node):
     """
 
     :param NN:
@@ -209,7 +209,7 @@ def get_NN_outputs(NN: Alpha_Net, node: Node):
     return child_priorities, value_estimate
 
 
-def run_single_MCTS(root_state: Connect4State, simulation_no: int, NN: Alpha_Net) -> (PlayerAction, Node):
+def run_single_MCTS(root_state: Connect4State, simulation_no: int, NN: AlphaNet) -> (PlayerAction, Node):
     """
     Runs MCTS simulation for a given root state n times.
     :param simulation_no: number of simulations to do
@@ -240,7 +240,7 @@ def run_single_MCTS(root_state: Connect4State, simulation_no: int, NN: Alpha_Net
 
 def run_AlphaFour(root_state: Connect4State, simulation_no=100, NN_iteration=0):
     # Create the NN
-    NN = Alpha_Net()
+    NN = AlphaNet()
     NN.eval()  # Turn on the evaluation mode
     # Load the NN if provided
     NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{NN_iteration}.pth.tar")

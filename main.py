@@ -1,5 +1,10 @@
+import os
+import pickle
+
 import numpy as np
 from typing import Optional, Callable
+
+from from_root import from_root
 
 from agents.agent_MCTS.gen_move import generate_move_MCTS
 from agents.agent_alphafour.self_play import MCTS_self_play
@@ -90,25 +95,37 @@ def human_vs_agent(
                     break
 
 
-NUMBER_OF_ITERATIONS = 2
+NUMBER_OF_ITERATIONS = 5
 NUMBER_OF_MCTS_GAMES_PER_ITERATION = 2
+NUMBER_OF_GAMES_PER_EVALUATION = 10
+NUMBER_OF_TRAINING_EPOCHS = 10
+NUMBER_OF_MCTS_SIMULATIONS = 100
 
 
-def main_pipeline(iterations):
+def main_pipeline():
     """
-    Runs the main pipeline of AlphaFour
-    :param iterations:
-    :return:
+    Runs the main pipeline of AlphaFour, given number of times.
     """
-    for i in range(iterations):
-        print(f"Started {i} iteration.")
+    for iteration in range(NUMBER_OF_ITERATIONS):
+        print(f"[PIPELINE] Started {iteration} iteration.")
         # Run the self-play MCTS and generate the data
-        MCTS_self_play(iteration=i, board=initialize_game_state(), number_of_games=NUMBER_OF_MCTS_GAMES_PER_ITERATION)
+        MCTS_self_play(iteration=iteration, board=initialize_game_state(),
+                       number_of_games=NUMBER_OF_MCTS_GAMES_PER_ITERATION, start_iter=0)
         # Train the NN with data from MCTS
-        trainNN(iteration=i, NN_iteration=0)
-        if i > 0:
-            better_NN = evaluate_NN()
-            # TODO: If the new NN does not win, train it more.
+        trainNN(iteration=iteration, num_of_epochs=NUMBER_OF_TRAINING_EPOCHS)
+        # Starting from second iteration, evaluate the NNs and choose the better one.
+        if iteration > 0:
+            better_NN = evaluate_NN(iteration, iteration + 1, number_of_games=NUMBER_OF_GAMES_PER_EVALUATION)
+            additional_runs = 0
+            # If the new NN is not good enough, train it more until it is.
+            while better_NN != (iteration + 1):
+                print("[PIPELINE] New NN not strong enough! More training needs to be done...")
+                MCTS_self_play(iteration=iteration, board=initialize_game_state(),
+                               number_of_games=NUMBER_OF_MCTS_GAMES_PER_ITERATION,
+                               start_iter=(additional_runs + 1) * NUMBER_OF_MCTS_GAMES_PER_ITERATION)
+                trainNN(iteration=iteration, num_of_epochs=NUMBER_OF_TRAINING_EPOCHS)
+                better_NN = evaluate_NN(iteration, iteration + 1, number_of_games=NUMBER_OF_GAMES_PER_EVALUATION)
+                additional_runs += 1
 
 
 if __name__ == "__main__":
@@ -119,10 +136,19 @@ if __name__ == "__main__":
     print("4. Play Human vs. MCTS Agent")
     agent = input("Please type the number to choose the agent:")
     if agent == "1":
-        main_pipeline(NUMBER_OF_ITERATIONS)
+        main_pipeline()
     elif agent == "2":
         human_vs_agent(user_move)
     elif agent == "3":
+        # Select the iteration
+        print("\n")
+        data_path = f"agents/agent_alphafour/trained_NN/"
+        number_of_iterations = len(os.listdir(data_path))
+        print(f"Choose the iteration of the AlphaFour from 0 to {number_of_iterations - 1}")
+        iteration = input("Chosen iteration:")
+        filePath = from_root("chosen_iteration.pkl")
+        with open(filePath, "wb") as f:
+            pickle.dump({"iteration": iteration}, f)
         human_vs_agent(generate_move_alphafour)
     elif agent == "4":
         human_vs_agent(generate_move_MCTS)
