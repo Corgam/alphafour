@@ -23,16 +23,14 @@ class Convblock(nn.Module):
 
 
 class ResBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, activation='relu'):
+    def __init__(self, in_channels, out_channels):
         super().__init__()
-        self.expansion = 4
-        self.in_channels, self.out_channels, self.activation = in_channels, out_channels, activation
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=(1, 1), stride=(1, 1), padding=1, bias=False)
+        self.in_channels, self.out_channels = in_channels, out_channels
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(out_channels)
         self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(out_channels)
-        self.conv3 = nn.Conv2d(out_channels, out_channels, kernel_size=(1, 1), stride=(1, 1),
-                               padding=1, bias=False)
+        self.conv3 = nn.Conv2d(out_channels, out_channels, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
         self.bn3 = nn.BatchNorm2d(out_channels)
 
     def forward(self, value):
@@ -60,10 +58,10 @@ class OutBlock(nn.Module):
         super(OutBlock, self).__init__()
         self.conv = nn.Conv2d(42, 7, (3, 3), stride=(1, 1))
         # self.pool = nn.AvgPool2d(kernel_size=(3, 3))
-        self.ln = nn.Linear(504, 7)
+        self.ln = nn.Linear(140, 7)
 
         self.conv1 = nn.Conv2d(42, 1, (3, 3), stride=(1, 1))
-        self.ln1 = nn.Linear(72, 1)
+        self.ln1 = nn.Linear(20, 1)
 
     def forward(self, value):
         policy_head = self.conv(value)
