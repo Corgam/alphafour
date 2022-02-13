@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 from agents.common import string_to_board
 
-NUMBER_OF_RES_LAYERS = 1
+NUMBER_OF_RES_LAYERS = 11
 
 
 class Convblock(nn.Module):
@@ -36,14 +36,22 @@ class ResBlock(nn.Module):
         self.bn3 = nn.BatchNorm2d(out_channels)
 
     def forward(self, value):
+        # Remember the value
+        residual_value = value
+        # First conv
         value = self.conv1(value)
         value = self.bn1(value)
         value = F.relu(value)
+        # Second conv
         value = self.conv2(value)
         value = self.bn2(value)
         value = F.relu(value)
+        # Third conv
         value = self.conv3(value)
         value = self.bn3(value)
+        # Add the residual value
+        value += residual_value
+        value = F.relu(value)
         return value
 
 
