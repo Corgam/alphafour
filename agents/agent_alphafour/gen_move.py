@@ -14,5 +14,5 @@ def generate_move_alphafour(
     filePath = from_root("chosen_iteration.pkl")
     with open(filePath, "rb") as f:
         iteration = pickle.load(f)
-    move, root_node = run_AlphaFour(root_state, 1000, iteration["iteration"])
+    move, root_node = run_AlphaFour(root_state, 100, iteration["iteration"])
     return move, saved_state

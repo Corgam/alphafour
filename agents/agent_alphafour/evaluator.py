@@ -62,9 +62,9 @@ class Match:
         while state.get_possible_moves() and if_game_ended(state.board) is False:
             #  print(pretty_print_board(state.board))
             if state.player_just_moved == 1:
-                move, root_node = run_single_MCTS(state, 1000, second_player_NN)
+                move, root_node = run_single_MCTS(state, 100, second_player_NN)
             else:
-                move, root_node = run_single_MCTS(state, 1000, first_player_NN)
+                move, root_node = run_single_MCTS(state, 100, first_player_NN)
             # Make the move
             state.move(move)
         # Check who won
