@@ -4,9 +4,15 @@ import pickle
 
 import numpy as np
 
-from agents.agent_alphafour.mcts_with_NN import Connect4State, run_AlphaFour, Node
+from agents.agent_alphafour.mcts_with_NN import Connect4State, run_alpha_four, Node
 from agents.common import initialize_game_state, pretty_print_board, if_game_ended
-from agents.helpers import BoardPiece, PLAYER1, convert_number2print, GameState, get_rival_piece
+from agents.helpers import (
+    BoardPiece,
+    PLAYER1,
+    convert_number2print,
+    GameState,
+    get_rival_piece,
+)
 
 
 def calculatePolicy(node: Node):
@@ -15,27 +21,37 @@ def calculatePolicy(node: Node):
     :param node:
     :return:
     """
-    sumVisits = 0
+    sum_visits = 0
     policy = np.zeros([7], np.float32)
     # Calculate the overall number of visits.
     for child in node.children:
-        sumVisits += child.visits
+        sum_visits += child.visits
     # Calculate all values (for full columns, leave 0)
     for child in node.children:
-        policy[child.parent_move] = child.visits / sumVisits
+        policy[child.parent_move] = child.visits / sum_visits
     return policy
 
 
 def save_file(filename, dataset_finished: list, iteration):
-    if not os.path.exists(f"agents/agent_alphafour/training_data/iteration{iteration}/"):
+    if not os.path.exists(
+        f"agents/agent_alphafour/training_data/iteration{iteration}/"
+    ):
         os.makedirs(f"agents/agent_alphafour/training_data/iteration{iteration}/")
-    full_path = os.path.join(f"agents/agent_alphafour/training_data/iteration{iteration}/", filename)
+    full_path = os.path.join(
+        f"agents/agent_alphafour/training_data/iteration{iteration}/", filename
+    )
     with open(full_path, "wb") as file:
         pickle.dump(dataset_finished, file)
 
 
-def MCTS_self_play(iteration, board: np.ndarray, player: BoardPiece, number_of_simulations,
-                   number_of_games: int, start_iter: int):
+def mcts_self_play(
+    iteration,
+    board: np.ndarray,
+    player: BoardPiece,
+    number_of_simulations,
+    number_of_games: int,
+    start_iter: int,
+):
     print("[MCTS] Started MCTS plays!")
     starting_state = Connect4State(board, player)
     for game in range(number_of_games):
@@ -48,7 +64,7 @@ def MCTS_self_play(iteration, board: np.ndarray, player: BoardPiece, number_of_s
         # Play the game
         while state.get_possible_moves() and if_game_ended(state.board) is False:
             #  print(pretty_print_board(state.board))
-            move, root_node = run_AlphaFour(state, number_of_simulations, iteration)
+            move, root_node = run_alpha_four(state, number_of_simulations, iteration)
             policy = calculatePolicy(root_node)
             dataset_not_finished.append([state.board.copy(), policy])
             # Make the move
@@ -70,6 +86,6 @@ def MCTS_self_play(iteration, board: np.ndarray, player: BoardPiece, number_of_s
                 dataset_finished.append([loaded_board, loaded_policy, 0])
             else:
                 dataset_finished.append([loaded_board, loaded_policy, value])
-        timeStr = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+        time_str = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
         print(f"[MCTS] Finished playing MCTS game number: {game}. Saving results...")
-        save_file(f"data_game{game}_" + timeStr + ".pkl", dataset_finished, iteration)
+        save_file(f"data_game{game}_" + time_str + ".pkl", dataset_finished, iteration)

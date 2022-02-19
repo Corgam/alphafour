@@ -4,8 +4,15 @@ from typing import Optional
 import numpy as np
 from agents.helpers import BoardPiece, GameState, check_piece
 from agents.helpers import NO_PLAYER, PLAYER1, PLAYER2
-from agents.common import initialize_game_state, check_end_state, apply_player_action, string_to_board, \
-    pretty_print_board, connected_four, if_game_ended
+from agents.common import (
+    initialize_game_state,
+    check_end_state,
+    apply_player_action,
+    string_to_board,
+    pretty_print_board,
+    connected_four,
+    if_game_ended,
+)
 
 
 ## initialize_game_state tests ##
@@ -25,15 +32,18 @@ def test_initialize_game_state():
 
 def test_pretty_board_from_string():
     # Create a board from data
-    data = [[0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 2, 0, 0, 0, 0],
-            [0, 0, 1, 1, 0, 0, 0],
-            [0, 0, 2, 1, 1, 0, 0],
-            [0, 2, 1, 2, 2, 0, 0],
-            [0, 2, 2, 1, 1, 0, 0]]
+    data = [
+        [0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 2, 0, 0, 0, 0],
+        [0, 0, 1, 1, 0, 0, 0],
+        [0, 0, 2, 1, 1, 0, 0],
+        [0, 2, 1, 2, 2, 0, 0],
+        [0, 2, 2, 1, 1, 0, 0],
+    ]
     board_from_data = np.array(data, BoardPiece)
     # Create the same board from string
-    board_from_string = string_to_board("""
+    board_from_string = string_to_board(
+        """
     |==============|
     |    X         |
     |    O         |
@@ -43,7 +53,8 @@ def test_pretty_board_from_string():
     |  O O X X     |
     |==============|
     |0 1 2 3 4 5 6 |
-    """)
+    """
+    )
     assert np.array_equal(board_from_string, board_from_data)
 
 
@@ -52,17 +63,21 @@ def test_pretty_board_from_string():
 
 def test_pretty_print():
     # Create a board from data
-    data = [[0, 0, 1, 0, 0, 0, 0],
-            [0, 0, 2, 0, 0, 0, 0],
-            [0, 0, 1, 1, 0, 0, 0],
-            [0, 0, 2, 1, 1, 0, 0],
-            [0, 2, 1, 2, 2, 0, 0],
-            [0, 2, 2, 1, 1, 0, 0]]
+    data = [
+        [0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 2, 0, 0, 0, 0],
+        [0, 0, 1, 1, 0, 0, 0],
+        [0, 0, 2, 1, 1, 0, 0],
+        [0, 2, 1, 2, 2, 0, 0],
+        [0, 2, 2, 1, 1, 0, 0],
+    ]
     board_from_data = np.array(data, BoardPiece)
     # Print the board
     string_from_function = pretty_print_board(board_from_data)
-    string_from_text = "\n|==============|\n|    X         |\n|    O         |\n|    X X       |\n|" \
-                       "    O X X     |\n|  O X O O     |\n|  O O X X     |\n|==============|\n|0 1 2 3 4 5 6 |\n"
+    string_from_text = (
+        "\n|==============|\n|    X         |\n|    O         |\n|    X X       |\n|"
+        "    O X X     |\n|  O X O O     |\n|  O O X X     |\n|==============|\n|0 1 2 3 4 5 6 |\n"
+    )
     assert string_from_function == string_from_text
 
 
@@ -95,7 +110,8 @@ def test_player_action_copy_option():
 
 
 def test_player_action_on_full_column():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |  X           |
             |  O           |
@@ -105,7 +121,8 @@ def test_player_action_on_full_column():
             |  X X O O O   |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     copy_board = board.copy()
     apply_player_action(board, np.int8(1), PLAYER2, False)
     assert np.array_equal(board, copy_board)
@@ -115,7 +132,8 @@ def test_player_action_on_full_column():
 
 
 def test_connected4_horizontal():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |              |
             |              |
@@ -125,7 +143,8 @@ def test_connected4_horizontal():
             |  X X O O O   |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     assert not (connected_four(board, PLAYER1))
     apply_player_action(board, np.int8(4), PLAYER1)
     assert connected_four(board, PLAYER1)
@@ -136,7 +155,8 @@ def test_connected4_horizontal():
 
 
 def test_connected4_vertical():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |              |
             |              |
@@ -146,7 +166,8 @@ def test_connected4_vertical():
             |  X X O O O   |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     assert not (connected_four(board, PLAYER1))
     apply_player_action(board, np.int8(1), PLAYER1)
     assert connected_four(board, PLAYER1)
@@ -154,7 +175,8 @@ def test_connected4_vertical():
 
 
 def test_connected4_diagonal_right():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |              |
             |              |
@@ -164,7 +186,8 @@ def test_connected4_diagonal_right():
             |  X X O O O   |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     assert not (connected_four(board, PLAYER1))
     apply_player_action(board, np.int8(4), PLAYER1)
     assert connected_four(board, PLAYER1)
@@ -172,7 +195,8 @@ def test_connected4_diagonal_right():
 
 
 def test_connected4_diagonal_right2():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |              |
             |              |
@@ -182,7 +206,8 @@ def test_connected4_diagonal_right2():
             |  X X O O O X |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     assert not (connected_four(board, PLAYER2))
     apply_player_action(board, np.int8(6), PLAYER2)
     assert connected_four(board, PLAYER2)
@@ -190,7 +215,8 @@ def test_connected4_diagonal_right2():
 
 
 def test_connected4_diagonal_left():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |              |
             |              |
@@ -200,7 +226,8 @@ def test_connected4_diagonal_left():
             |    X O O O   |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     assert not (connected_four(board, PLAYER2))
     apply_player_action(board, np.int8(2), PLAYER2)
     assert connected_four(board, PLAYER2)
@@ -208,7 +235,8 @@ def test_connected4_diagonal_left():
 
 
 def test_connected4_diagonal_left2():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |              |
             |              |
@@ -218,7 +246,8 @@ def test_connected4_diagonal_left2():
             |  X X O X O O |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     assert not (connected_four(board, PLAYER1))
     apply_player_action(board, np.int8(2), PLAYER1)
     assert connected_four(board, PLAYER1)
@@ -229,7 +258,8 @@ def test_connected4_diagonal_left2():
 
 
 def test_game_still_going_and_won():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |              |
             |              |
@@ -239,7 +269,8 @@ def test_game_still_going_and_won():
             |  X X O X O O |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     assert check_end_state(board, PLAYER1) == GameState.STILL_PLAYING
     apply_player_action(board, np.int8(4), PLAYER1)
     assert check_end_state(board, PLAYER1) == GameState.IS_WIN
@@ -247,7 +278,8 @@ def test_game_still_going_and_won():
 
 
 def test_game_draw():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |X O X O X O X |
             |X O X O X O X |
@@ -257,12 +289,14 @@ def test_game_draw():
             |O X O X O X O |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     assert check_end_state(board, PLAYER1) == GameState.IS_DRAW
 
 
 def test_game_still_going_and_lost():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |              |
             |              |
@@ -272,7 +306,8 @@ def test_game_still_going_and_lost():
             |  X X O X O O |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     assert check_end_state(board, PLAYER1) == GameState.STILL_PLAYING
     apply_player_action(board, np.int8(2), PLAYER1)
     assert check_end_state(board, PLAYER2) == GameState.IS_LOST
@@ -283,7 +318,8 @@ def test_game_still_going_and_lost():
 
 
 def test_if_game_ended_lost():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |              |
             |              |
@@ -293,7 +329,8 @@ def test_if_game_ended_lost():
             |  X X O X O O |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     assert not if_game_ended(board)
     apply_player_action(board, np.int8(4), PLAYER1)
     assert if_game_ended(board)
@@ -301,7 +338,8 @@ def test_if_game_ended_lost():
 
 
 def test_if_game_ended_lost2():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |              |
             |              |
@@ -311,7 +349,8 @@ def test_if_game_ended_lost2():
             |  X X O X O O |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     assert not if_game_ended(board)
     apply_player_action(board, np.int8(2), PLAYER2)
     assert if_game_ended(board)
@@ -319,7 +358,8 @@ def test_if_game_ended_lost2():
 
 
 def test_if_game_ended_draw():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |X O X O X O X |
             |X O X O X O X |
@@ -329,5 +369,6 @@ def test_if_game_ended_draw():
             |O X O X O X O |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     assert if_game_ended(board)

@@ -7,9 +7,9 @@ from agents.common import string_to_board
 NUMBER_OF_RES_LAYERS = 11
 
 
-class Convblock(nn.Module):
+class ConvBlock(nn.Module):
     def __init__(self):
-        super(Convblock, self).__init__()
+        super(ConvBlock, self).__init__()
 
         self.bn = nn.BatchNorm2d(42)
         self.conv = nn.Conv2d(1, 42, kernel_size=(3, 3), stride=(1, 1), padding=1)
@@ -26,11 +26,32 @@ class ResBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.in_channels, self.out_channels = in_channels, out_channels
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
+        self.conv1 = nn.Conv2d(
+            in_channels,
+            out_channels,
+            kernel_size=(3, 3),
+            stride=(1, 1),
+            padding=1,
+            bias=False,
+        )
         self.bn1 = nn.BatchNorm2d(out_channels)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
+        self.conv2 = nn.Conv2d(
+            out_channels,
+            out_channels,
+            kernel_size=(3, 3),
+            stride=(1, 1),
+            padding=1,
+            bias=False,
+        )
         self.bn2 = nn.BatchNorm2d(out_channels)
-        self.conv3 = nn.Conv2d(out_channels, out_channels, kernel_size=(3, 3), stride=(1, 1), padding=1, bias=False)
+        self.conv3 = nn.Conv2d(
+            out_channels,
+            out_channels,
+            kernel_size=(3, 3),
+            stride=(1, 1),
+            padding=1,
+            bias=False,
+        )
         self.bn3 = nn.BatchNorm2d(out_channels)
 
     def forward(self, value):
@@ -57,7 +78,6 @@ class OutBlock(nn.Module):
     def __init__(self):
         super(OutBlock, self).__init__()
         self.conv = nn.Conv2d(42, 7, (3, 3), stride=(1, 1))
-        # self.pool = nn.AvgPool2d(kernel_size=(3, 3))
         self.ln = nn.Linear(140, 7)
 
         self.conv1 = nn.Conv2d(42, 1, (3, 3), stride=(1, 1))
@@ -65,13 +85,11 @@ class OutBlock(nn.Module):
 
     def forward(self, value):
         policy_head = self.conv(value)
-        # policy_head = F.relu(policy_head)
         policy_head = policy_head.view(1, -1)
         policy_head = self.ln(policy_head)
         policy_head = torch.softmax(policy_head, dim=1)
 
         value_head = self.conv1(value)
-        # value_head = F.relu(value_head)
         value_head = value_head.view(1, -1)
         value_head = self.ln1(value_head)
 
@@ -87,7 +105,7 @@ class AlphaNet(torch.nn.Module):
 
     def __init__(self) -> None:
         super(AlphaNet, self).__init__()
-        self.convLayer = Convblock()
+        self.convLayer = ConvBlock()
         self.resLayers = [ResBlock(42, 42)] * NUMBER_OF_RES_LAYERS
         self.fullLayer = OutBlock()
 
@@ -106,14 +124,16 @@ class AlphaLossFunction(torch.nn.Module):
     def __init__(self):
         super(AlphaLossFunction, self).__init__()
 
-    def forward(self, y_value, value):
+    @staticmethod
+    def forward(y_value, value):
         value_error = (value - y_value) ** 2
         return value_error
 
 
 if __name__ == "__main__":
     net = AlphaNet()
-    board = string_to_board("""
+    board = string_to_board(
+        """
     |==============|
     |    X         |
     |    O         |
@@ -123,7 +143,8 @@ if __name__ == "__main__":
     |  O O X X     |
     |==============|
     |0 1 2 3 4 5 6 |
-    """)
+    """
+    )
     neuralBoard = board
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     input_size = 3

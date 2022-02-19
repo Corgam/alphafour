@@ -5,7 +5,7 @@ import torch
 from from_root import from_root
 
 from agents.agent_alphafour.NN import AlphaNet
-from agents.agent_alphafour.mcts_with_NN import Connect4State, run_single_MCTS
+from agents.agent_alphafour.mcts_with_NN import Connect4State, run_single_mcts
 from agents.common import initialize_game_state, if_game_ended
 from agents.helpers import PLAYER1, GameState
 
@@ -27,13 +27,13 @@ def load_file(filename):
 
 
 class Match:
-    def __init__(self, current_NN, best_NN):
-        self.current_NN = current_NN
-        self.best_NN = best_NN
+    def __init__(self, current_nn, best_nn):
+        self.current_nn = current_nn
+        self.best_nn = best_nn
         pass
 
     def solve(self, number_of_games: int):
-        print(F"[EVALUATOR] Starting NN Match with {number_of_games} total rounds!")
+        print(f"[EVALUATOR] Starting NN Match with {number_of_games} total rounds!")
         wins = 0
         for i in range(number_of_games):
             print(f"[EVALUATOR] Starting {i} round!")
@@ -41,20 +41,25 @@ class Match:
                 winner = self.play_round(i)
             if winner == "current":
                 wins += 1
-        save_file("wins_ratio", {"ratio": wins / number_of_games, "number_of_games": number_of_games})
-        print(f"[EVALUATOR] Finished NN Match with ratio {wins / number_of_games} from {number_of_games} total games!")
+        save_file(
+            "wins_ratio",
+            {"ratio": wins / number_of_games, "number_of_games": number_of_games},
+        )
+        print(
+            f"[EVALUATOR] Finished NN Match with ratio {wins / number_of_games} from {number_of_games} total games!"
+        )
 
     def play_round(self, iteration_number: int):
         starting_player = PLAYER1
         state = Connect4State(initialize_game_state(), starting_player)
         if iteration_number % 2 == 0:
-            first_player_NN = self.current_NN
-            second_player_NN = self.best_NN
+            first_player_nn = self.current_nn
+            second_player_nn = self.best_nn
             first_player = "current"
             second_player = "best"
         else:
-            first_player_NN = self.best_NN
-            second_player_NN = self.current_NN
+            first_player_nn = self.best_nn
+            second_player_nn = self.current_nn
             first_player = "best"
             second_player = "current"
 
@@ -62,9 +67,9 @@ class Match:
         while state.get_possible_moves() and if_game_ended(state.board) is False:
             #  print(pretty_print_board(state.board))
             if state.player_just_moved == 1:
-                move, root_node = run_single_MCTS(state, 100, second_player_NN)
+                move, root_node = run_single_mcts(state, 100, second_player_nn)
             else:
-                move, root_node = run_single_MCTS(state, 100, first_player_NN)
+                move, root_node = run_single_mcts(state, 100, first_player_nn)
             # Make the move
             state.move(move)
         # Check who won
@@ -77,27 +82,31 @@ class Match:
             return None
 
 
-def evaluate_NN(best_NN_id, current_NN_id, number_of_games):
+def evaluate_nn(best_nn_id, current_nn_id, number_of_games):
     print("[EVALUATOR] Started evaluating the NNs.")
     # Prepare filenames for NNs
-    best_NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{best_NN_id}.pth.tar")
-    current_NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{current_NN_id}.pth.tar")
-    best_NN = AlphaNet()
-    current_NN = AlphaNet()
-    best_NN.eval()
-    current_NN.eval()
+    best_nn_filename = from_root(
+        f"agents/agent_alphafour/trained_NN/NN_iteration{best_nn_id}.pth.tar"
+    )
+    current_nn_filename = from_root(
+        f"agents/agent_alphafour/trained_NN/NN_iteration{current_nn_id}.pth.tar"
+    )
+    best_nn = AlphaNet()
+    current_nn = AlphaNet()
+    best_nn.eval()
+    current_nn.eval()
     # Load the current NN
-    loaded_NN = torch.load(current_NN_filename)
-    current_NN.load_state_dict(loaded_NN["state_dict"])
-    loaded_NN = torch.load(best_NN_filename)
-    best_NN.load_state_dict(loaded_NN["state_dict"])
+    loaded_NN = torch.load(current_nn_filename)
+    current_nn.load_state_dict(loaded_NN["state_dict"])
+    loaded_NN = torch.load(best_nn_filename)
+    best_nn.load_state_dict(loaded_NN["state_dict"])
     # Play the match
-    match = Match(current_NN=current_NN, best_NN=best_NN)
+    match = Match(current_nn=current_nn, best_nn=best_nn)
     match.solve(number_of_games)
     ratio = load_file("wins_ratio")
     if ratio["ratio"] >= 0.55:
         print("[EVALUATOR] Finished evaluating. New network won!")
-        return current_NN_id
+        return current_nn_id
     else:
         print("[EVALUATOR] Finished evaluating. New network lost!")
-        return best_NN_id
+        return best_nn_id

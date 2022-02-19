@@ -7,13 +7,23 @@ import numpy as np
 
 BoardPiece = np.int8  # The data type (dtype) of the board
 NO_PLAYER = BoardPiece(0)  # board[i, j] == NO_PLAYER where the position is empty
-PLAYER1 = BoardPiece(1)  # board[i, j] == PLAYER1 where player 1 (player to move first) has a piece
-PLAYER2 = BoardPiece(2)  # board[i, j] == PLAYER2 where player 2 (player to move second) has a piece
+PLAYER1 = BoardPiece(
+    1
+)  # board[i, j] == PLAYER1 where player 1 (player to move first) has a piece
+PLAYER2 = BoardPiece(
+    2
+)  # board[i, j] == PLAYER2 where player 2 (player to move second) has a piece
 
 BoardPiecePrint = str  # dtype for string representation of BoardPiece.
-NO_PLAYER_PRINT = BoardPiecePrint(' ')  # Print representation of empty space on the board.
-PLAYER1_PRINT = BoardPiecePrint('X')  # Print representation of the Player 1 piece on the board.
-PLAYER2_PRINT = BoardPiecePrint('O')  # Print representation of the Player 2 piece on the board.
+NO_PLAYER_PRINT = BoardPiecePrint(
+    " "
+)  # Print representation of empty space on the board.
+PLAYER1_PRINT = BoardPiecePrint(
+    "X"
+)  # Print representation of the Player 1 piece on the board.
+PLAYER2_PRINT = BoardPiecePrint(
+    "O"
+)  # Print representation of the Player 2 piece on the board.
 
 PlayerAction = np.int8  # The column to be played
 
@@ -22,12 +32,19 @@ class SavedState:
     """
     Class for storing the state of the board for future use.
     """
+
     pass
 
 
 GenMove = Callable[
-    [np.ndarray, BoardPiece, Optional[SavedState]],  # Arguments for the generate_move function
-    Tuple[PlayerAction, Optional[SavedState]]  # Return type of the generate_move function
+    [
+        np.ndarray,
+        BoardPiece,
+        Optional[SavedState],
+    ],  # Arguments for the generate_move function
+    Tuple[
+        PlayerAction, Optional[SavedState]
+    ],  # Return type of the generate_move function
 ]
 
 
@@ -35,6 +52,7 @@ class GameState(Enum):
     """
     Class for representing the game state of the board.
     """
+
     IS_WIN = 1
     IS_DRAW = -1
     IS_LOST = -2

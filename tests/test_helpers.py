@@ -1,8 +1,19 @@
 ### CODE BY EMIL BALITZKI ###
 from agents.common import initialize_game_state, string_to_board
-from agents.helpers import check_piece, get_rival_piece, convert_number2print, \
-    convert_print2number
-from agents.helpers import NO_PLAYER, PLAYER1, PLAYER2, PLAYER1_PRINT, PLAYER2_PRINT, NO_PLAYER_PRINT
+from agents.helpers import (
+    check_piece,
+    get_rival_piece,
+    convert_number2print,
+    convert_print2number,
+)
+from agents.helpers import (
+    NO_PLAYER,
+    PLAYER1,
+    PLAYER2,
+    PLAYER1_PRINT,
+    PLAYER2_PRINT,
+    NO_PLAYER_PRINT,
+)
 
 
 def test_print_to_number():
@@ -23,7 +34,8 @@ def test_check_piece_simple():
 
 
 def test_check_piece_complex():
-    board = string_to_board("""
+    board = string_to_board(
+        """
             |==============|
             |              |
             |              |
@@ -33,7 +45,8 @@ def test_check_piece_complex():
             |  X X O O O   |
             |==============|
             |0 1 2 3 4 5 6 |
-            """)
+            """
+    )
     assert check_piece(board, (2, 2), NO_PLAYER)
     assert check_piece(board, (2, 1), PLAYER2)
     assert check_piece(board, (3, 1), PLAYER1)

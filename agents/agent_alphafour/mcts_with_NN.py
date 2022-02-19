@@ -8,8 +8,20 @@ import torch.cuda
 from from_root import from_root
 
 from agents.agent_alphafour.NN import AlphaNet
-from agents.common import apply_player_action, check_end_state, initialize_game_state, pretty_print_board
-from agents.helpers import calculate_possible_moves, get_rival_piece, PlayerAction, GameState, PLAYER1, BoardPiece
+from agents.common import (
+    apply_player_action,
+    check_end_state,
+    initialize_game_state,
+    pretty_print_board,
+)
+from agents.helpers import (
+    calculate_possible_moves,
+    get_rival_piece,
+    PlayerAction,
+    GameState,
+    PLAYER1,
+    BoardPiece,
+)
 
 
 class Connect4State:
@@ -19,7 +31,9 @@ class Connect4State:
     """
 
     def __init__(self, board=initialize_game_state(), player=PLAYER1):
-        self.player_just_moved: BoardPiece = get_rival_piece(player)  # Player who moved last.
+        self.player_just_moved: BoardPiece = get_rival_piece(
+            player
+        )  # Player who moved last.
         self.board: np.ndarray = board  # The board itself
 
     def copy(self) -> Connect4State:
@@ -70,14 +84,20 @@ class Node:
     number of visits, list of untried moves and which player just moved.
     """
 
-    def __init__(self, state: Connect4State = None, parent_move: PlayerAction = None, parent: Node = None):
+    def __init__(
+        self,
+        state: Connect4State = None,
+        parent_move: PlayerAction = None,
+        parent: Node = None,
+    ):
         self.parent_move: PlayerAction = parent_move  # Move which the parent carried out
         self.parent = parent  # Node of the parent. None if self is a root node.
         self.children: List[Node] = []  # Set of all possible children
         self.visits: int = 0  # How many times this node has been visited
         self.wins: int = 0  # How many times this node has won
         self.untried_moves: list[
-            PlayerAction] = state.get_possible_moves()  # List of all moves possible from that node.
+            PlayerAction
+        ] = state.get_possible_moves()  # List of all moves possible from that node.
         self.state = state
         self.children_priorities = np.zeros([7], np.float32)
 
@@ -103,10 +123,19 @@ class Node:
         # self.children]
         # TODO: Check if the calculations are right
         # TODO: Maybe replace the first value?
-        UCTs = [child.wins / child.visits + np.sqrt(
-            2 * np.log(self.visits) * (abs(self.children_priorities[self.children.index(child)]) / child.visits)) for
-                child in self.children]
-        return self.children[np.argmax(UCTs)]
+        ucts = [
+            child.wins / child.visits
+            + np.sqrt(
+                2
+                * np.log(self.visits)
+                * (
+                    abs(self.children_priorities[self.children.index(child)])
+                    / child.visits
+                )
+            )
+            for child in self.children
+        ]
+        return self.children[np.argmax(ucts)]
 
     def backpropagate(self, result: GameState):
         """
@@ -156,9 +185,13 @@ def rollout(node, child_priorities):
     temp_priorities = child_priorities
     # If it is the root node, make the priorities a little bit random, so each run is different
     if node.parent is None:
-        randomValues = np.random.dirichlet(np.zeros([len(temp_priorities)], np.float32) + 192)
+        random_values = np.random.dirichlet(
+            np.zeros([len(temp_priorities)], np.float32) + 192
+        )
         for prior in range(len(temp_priorities)):
-            temp_priorities[prior] = 0.75 * temp_priorities[prior] + 0.25 * randomValues[prior]
+            temp_priorities[prior] = (
+                0.75 * temp_priorities[prior] + 0.25 * random_values[prior]
+            )
     # Mask all unavailable moves
     for i in range(len(child_priorities)):
         if i not in moves:
@@ -186,7 +219,7 @@ def backpropagate(node: Node, state: Connect4State, value_estimate):
         node = node.parent
 
 
-def get_NN_outputs(NN: AlphaNet, node: Node):
+def get_nn_outputs(NN: AlphaNet, node: Node):
     """
 
     :param NN:
@@ -203,18 +236,22 @@ def get_NN_outputs(NN: AlphaNet, node: Node):
     # Get values from the NN
     child_priorities, value_estimate = NN(board)
     # Unpack the values
-    child_priorities = child_priorities.detach().cpu().numpy()  # Change to numpy ndarray
+    child_priorities = (
+        child_priorities.detach().cpu().numpy()
+    )  # Change to numpy ndarray
     child_priorities = child_priorities.reshape(-1)  # Delete one dimension
     value_estimate = value_estimate.item()
     return child_priorities, value_estimate
 
 
-def run_single_MCTS(root_state: Connect4State, simulation_no: int, NN: AlphaNet) -> (PlayerAction, Node):
+def run_single_mcts(
+    root_state: Connect4State, simulation_no: int, nn: AlphaNet
+) -> (PlayerAction, Node):
     """
     Runs MCTS simulation for a given root state n times.
     :param simulation_no: number of simulations to do
     :param root_state: beginning state
-    :param NN: the neural network
+    :param nn: the neural network
     :return: best_move
     """
     # Create the root node
@@ -228,7 +265,7 @@ def run_single_MCTS(root_state: Connect4State, simulation_no: int, NN: AlphaNet)
         # 2. Expand the selected node
         node, state = expand(node, state)
         # 3. Ask the NN for values
-        child_priorities, value_estimate = get_NN_outputs(NN, node)
+        child_priorities, value_estimate = get_nn_outputs(nn, node)
         # 4. Rollout the selected node until the end of the game
         state = rollout(node, child_priorities)
         # 5. Backpropagate
@@ -238,22 +275,24 @@ def run_single_MCTS(root_state: Connect4State, simulation_no: int, NN: AlphaNet)
     return root_node.children[np.argmax(children_visits)].parent_move, root_node
 
 
-def run_AlphaFour(root_state: Connect4State, simulation_no, NN_iteration):
+def run_alpha_four(root_state: Connect4State, simulation_no, nn_iteration):
     # Create the NN
-    NN = AlphaNet()
-    NN.eval()  # Turn on the evaluation mode
+    nn = AlphaNet()
+    nn.eval()  # Turn on the evaluation mode
     # Load the NN if provided
-    NN_filename = from_root(f"agents/agent_alphafour/trained_NN/NN_iteration{NN_iteration}.pth.tar")
-    if os.path.isfile(NN_filename):
-        loaded_NN = torch.load(NN_filename)
-        NN.load_state_dict(loaded_NN["state_dict"])
+    nn_filename = from_root(
+        f"agents/agent_alphafour/trained_NN/NN_iteration{nn_iteration}.pth.tar"
+    )
+    if os.path.isfile(nn_filename):
+        loaded_nn = torch.load(nn_filename)
+        nn.load_state_dict(loaded_nn["state_dict"])
         #  print(f"Loaded {NN_filename} neural network.")
     else:
-        torch.save({"state_dict": NN.state_dict()}, NN_filename)
+        torch.save({"state_dict": nn.state_dict()}, nn_filename)
         #  print(f"Created new {NN_filename} neural network.")
     # Turn on CUDA
     # device = torch.device('cuda')if torch.cuda.is_available() else torch.device('cpu')
     # NN.to(device)
     with torch.no_grad():
-        move, root_node = run_single_MCTS(root_state, simulation_no, NN)
+        move, root_node = run_single_mcts(root_state, simulation_no, nn)
     return move, root_node
