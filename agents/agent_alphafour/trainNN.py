@@ -44,7 +44,16 @@ def load_nn(nn: AlphaNet, iteration: int) -> int:
 
 
 def train(nn: AlphaNet, dataset: list, optimizer: Adam, scheduler: MultiStepLR, num_of_epochs: int, iteration: int):
-    # TODO doc string
+    """
+    Inner function for training the NN, requires optimizer and scheduler to be passed in.
+    Do not call directly.
+    :param nn: the NN to train
+    :param dataset: the dataset to train from
+    :param optimizer: the optimizer used in training
+    :param scheduler: the scheduler used in training
+    :param num_of_epochs: number of epochs to run
+    :param iteration: current iteration of the main pipeline
+    """
     torch.manual_seed(0)
     # Turn on training mode
     nn.train()
@@ -88,7 +97,11 @@ def train(nn: AlphaNet, dataset: list, optimizer: Adam, scheduler: MultiStepLR, 
 
 def train_nn(iteration: int, num_of_epochs: int, learning_rate: float = 0.001):
     """
-    Loads nn of given iteration and starts training
+    Main function for training the NN.
+    Loads the NN and creates the optimizer and scheduler.
+    :param iteration: starting iteration of the NN to load
+    :param num_of_epochs: how many epochs the training will take
+    :param learning_rate: the learning rate of the NN
     """
     print("[TRAINING] Started training!")
     # Load saved data
@@ -99,18 +112,14 @@ def train_nn(iteration: int, num_of_epochs: int, learning_rate: float = 0.001):
         with open(filename, "rb") as f:
             data = pickle.load(f, encoding="bytes")
             dataset.extend(data)
-    # Train the NN
     nn = AlphaNet()
-    # Turn on CUDA if available
-    # dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    # NN.to(dev)
     # Create optimizer and scheduler
     optimizer = torch.optim.Adam(nn.parameters(), lr=learning_rate, betas=(0.8, 0.999))
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
         optimizer, milestones=[50, 100, 150, 200, 250, 300, 400], gamma=0.77
     )
-    # Load state
+    # Load the state
     load_nn(nn, iteration)
-    # Train
+    # Train the NN
     train(nn, dataset, optimizer, scheduler, num_of_epochs, iteration)
     print("[TRAINING] Finished training!")
