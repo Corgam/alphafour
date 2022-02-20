@@ -261,6 +261,14 @@ def run_single_mcts(root_state: Connect4State, simulation_no: int, nn: AlphaNet)
 
 
 def run_alpha_four(root_state: Connect4State, simulation_no: int, nn_iteration: int):
+    """
+    The main function to run the MCTS on the root state.
+    Creates or loads up the NN before simulation.
+    :param root_state: the root state to start simulation from
+    :param simulation_no: how many simulations of MCTS to do
+    :param nn_iteration: the iteration of NN to load
+    :return:
+    """
     # Create the NN
     nn = AlphaNet()
     nn.eval()  # Turn on the evaluation mode
