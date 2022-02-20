@@ -8,7 +8,8 @@ NUMBER_OF_RES_LAYERS = 11
 
 
 class ConvBlock(nn.Module):
-    """ Convolutional Block """
+    """ Convolutional Block Performs initial convolution and batch normalization. Input: Connect 4 board
+     Output: Tensor"""
     def __init__(self):
         super(ConvBlock, self).__init__()
 
@@ -25,7 +26,7 @@ class ConvBlock(nn.Module):
 
 class ResBlock(nn.Module):
     """Residual block. Performs 3 convolutions and 3 batch normalizations.
-    Input is
+    Input: Tensor computed in the convolutional block. Output: Tensor
     """
     def __init__(self, in_channels, out_channels):
         super().__init__()
