@@ -8,6 +8,7 @@ NUMBER_OF_RES_LAYERS = 11
 
 
 class ConvBlock(nn.Module):
+    """ Convolutional Block """
     def __init__(self):
         super(ConvBlock, self).__init__()
 
@@ -23,6 +24,9 @@ class ConvBlock(nn.Module):
 
 
 class ResBlock(nn.Module):
+    """Residual block. Performs 3 convolutions and 3 batch normalizations.
+    Input is
+    """
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.in_channels, self.out_channels = in_channels, out_channels
@@ -75,6 +79,10 @@ class ResBlock(nn.Module):
 
 
 class OutBlock(nn.Module):
+    """
+    Output block for the neural network. Takes All computed data and reduces the dimensions.
+    Returns policy vector (1 by 7) and value head (1 by 1).
+    """
     def __init__(self):
         super(OutBlock, self).__init__()
         self.conv = nn.Conv2d(42, 7, (3, 3), stride=(1, 1))
