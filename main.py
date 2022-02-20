@@ -181,14 +181,17 @@ if __name__ == "__main__":
         print("\n")
         data_path = f"agents/agent_alphafour/trained_NN/"
         number_of_iterations = len(os.listdir(data_path))
-        print(
-            f"Choose the iteration of the AlphaFour from 0 to {number_of_iterations - 1}"
-        )
-        it = input("Chosen iteration:")
-        filePath = from_root("chosen_iteration.pkl")
-        with open(filePath, "wb") as f:
-            pickle.dump({"iteration": it, "number_of_mcts_simulations": NUMBER_OF_MCTS_SIMULATIONS}, f)
-        human_vs_agent(generate_move_alphafour)
+        if number_of_iterations == 0:
+            print("No trained agent available! Firstly, train the agent yourself!")
+        else:
+            print(
+                f"Choose the iteration of the AlphaFour from 0 to {number_of_iterations - 1}"
+            )
+            it = input("Chosen iteration:")
+            filePath = from_root("chosen_iteration.pkl")
+            with open(filePath, "wb") as f:
+                pickle.dump({"iteration": it, "number_of_mcts_simulations": NUMBER_OF_MCTS_SIMULATIONS}, f)
+            human_vs_agent(generate_move_alphafour)
     elif agent == "4":
         human_vs_agent(generate_move_mcts)
     else:
