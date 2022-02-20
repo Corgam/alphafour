@@ -1,5 +1,6 @@
 import os
 import pickle
+from typing import Optional
 
 import torch
 from from_root import from_root
@@ -10,7 +11,10 @@ from agents.common import initialize_game_state, if_game_ended
 from agents.helpers import PLAYER1, GameState
 
 
-def save_file(filename, data):
+def save_file(filename: str, data: dict):
+    """
+    Saves `data` to file located at agents/agent_alphafour/evaluation_data/<filename>
+    """
     if not os.path.exists(f"agents/agent_alphafour/evaluation_data/"):
         os.makedirs(f"agents/agent_alphafour/evaluation_data/")
     full_path = os.path.join(f"agents/agent_alphafour/evaluation_data/", filename)
@@ -18,7 +22,10 @@ def save_file(filename, data):
         pickle.dump(data, file)
 
 
-def load_file(filename):
+def load_file(filename: str) -> dict:
+    """
+    Returns data loaded from agents/agent_alphafour/evaluation_data/<filename> if available
+    """
     if os.path.exists(f"agents/agent_alphafour/evaluation_data/"):
         full_path = os.path.join(f"agents/agent_alphafour/evaluation_data/", filename)
         with open(full_path, "rb") as file:
@@ -27,29 +34,14 @@ def load_file(filename):
 
 
 class Match:
-    def __init__(self, current_nn, best_nn):
+    """
+    Match to be played while evaluating old vs new neural net
+    """
+    def __init__(self, current_nn: AlphaNet, best_nn: AlphaNet):
         self.current_nn = current_nn
         self.best_nn = best_nn
-        pass
 
-    def solve(self, number_of_games: int, number_of_mcts_simulations: int):
-        print(f"[EVALUATOR] Starting NN Match with {number_of_games} total rounds!")
-        wins = 0
-        for i in range(number_of_games):
-            print(f"[EVALUATOR] Starting {i} round!")
-            with torch.no_grad():
-                winner = self.play_round(i, number_of_mcts_simulations)
-            if winner == "current":
-                wins += 1
-        save_file(
-            "wins_ratio",
-            {"ratio": wins / number_of_games, "number_of_games": number_of_games},
-        )
-        print(
-            f"[EVALUATOR] Finished NN Match with ratio {wins / number_of_games} from {number_of_games} total games!"
-        )
-
-    def play_round(self, iteration_number: int, number_of_mcts_simulations: int):
+    def play_round(self, iteration_number: int, number_of_mcts_simulations: int) -> Optional[str]:
         starting_player = PLAYER1
         state = Connect4State(initialize_game_state(), starting_player)
         if iteration_number % 2 == 0:
@@ -81,8 +73,31 @@ class Match:
             # Draw
             return None
 
+    def solve(self, number_of_games: int, number_of_mcts_simulations: int):
+        """
+        Runs games and stores win ratio in file
+        """
+        print(f"[EVALUATOR] Starting NN Match with {number_of_games} total rounds!")
+        wins = 0
+        for i in range(number_of_games):
+            print(f"[EVALUATOR] Starting {i} round!")
+            with torch.no_grad():
+                winner = self.play_round(i, number_of_mcts_simulations)
+            if winner == "current":
+                wins += 1
+        save_file(
+            "wins_ratio",
+            {"ratio": wins / number_of_games, "number_of_games": number_of_games},
+        )
+        print(
+            f"[EVALUATOR] Finished NN Match with ratio {wins / number_of_games} from {number_of_games} total games!"
+        )
 
-def evaluate_nn(best_nn_id, current_nn_id, number_of_games, number_of_mcts_simulations):
+
+def evaluate_nn(best_nn_id: int, current_nn_id: int, number_of_games: int, number_of_mcts_simulations: int) -> int:
+    """
+    Loads both the old and new neural nets and lets them play against each other to evaluate improvement
+    """
     print("[EVALUATOR] Started evaluating the NNs.")
     # Prepare filenames for NNs
     best_nn_filename = from_root(
@@ -96,10 +111,10 @@ def evaluate_nn(best_nn_id, current_nn_id, number_of_games, number_of_mcts_simul
     best_nn.eval()
     current_nn.eval()
     # Load the current NN
-    loaded_NN = torch.load(current_nn_filename)
-    current_nn.load_state_dict(loaded_NN["state_dict"])
-    loaded_NN = torch.load(best_nn_filename)
-    best_nn.load_state_dict(loaded_NN["state_dict"])
+    loaded_nn = torch.load(current_nn_filename)
+    current_nn.load_state_dict(loaded_nn["state_dict"])
+    loaded_nn = torch.load(best_nn_filename)
+    best_nn.load_state_dict(loaded_nn["state_dict"])
     # Play the match
     match = Match(current_nn=current_nn, best_nn=best_nn)
     match.solve(number_of_games, number_of_mcts_simulations)
