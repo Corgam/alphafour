@@ -128,29 +128,3 @@ class AlphaLossFunction(torch.nn.Module):
     def forward(y_value, value):
         value_error = (value - y_value) ** 2
         return value_error
-
-
-if __name__ == "__main__":
-    net = AlphaNet()
-    board = string_to_board(
-        """
-    |==============|
-    |    X         |
-    |    O         |
-    |    X X       |
-    |    O X X     |
-    |  O X O O     |
-    |  O O X X     |
-    |==============|
-    |0 1 2 3 4 5 6 |
-    """
-    )
-    neuralBoard = board
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    input_size = 3
-    num_classes = 7
-    learning_rate = 0.001
-    batch_size = 64
-    num_epochs = 1
-
-    print(net(neuralBoard))
