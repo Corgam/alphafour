@@ -15,32 +15,44 @@ from agents.agent_alphafour.NN import AlphaNet, AlphaLossFunction
 
 class BoardDataset(Dataset):
     """
-    Dataset for the board, policies and values
+    Dataset for storing triplets of the board, policies and values.
     """
-    def __init__(self, dataset):  # dataset = np.array of (s, p, v)
+    def __init__(self, dataset: list):
         self.boards = [data[0] for data in dataset]
         self.policies = [data[1] for data in dataset]
         self.values = [data[2] for data in dataset]
 
     def __len__(self):
+        """
+        Total length of the dataset.
+        :return: length
+        """
         return len(self.boards)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int):
+        """
+        Returns a specific item from given index.
+        :param idx: index
+        :return: item_with_specified_index
+        """
         return np.int64(self.boards[idx]), self.policies[idx], self.values[idx]
 
 
-def load_nn(nn: AlphaNet, iteration: int) -> int:
-    # TODO doc string and what is up with start epoch?
+def load_nn(nn: AlphaNet, iteration: int):
+    """
+    Loads the saved state of the NN into the NN object.
+    :param nn: the NN object to load into
+    :param iteration: the iteration of NN to load from
+    :return:
+    """
     nn_filename = from_root(
         f"agents/agent_alphafour/trained_NN/NN_iteration{iteration}.pth.tar"
     )
-    start_epoch = 0
     loaded_nn = None
     if os.path.isfile(nn_filename):
         loaded_nn = torch.load(nn_filename)
     if loaded_nn is not None:
         nn.load_state_dict(loaded_nn["state_dict"])
-    return start_epoch
 
 
 def train(nn: AlphaNet, dataset: list, optimizer: Adam, scheduler: MultiStepLR, num_of_epochs: int, iteration: int):
@@ -66,7 +78,6 @@ def train(nn: AlphaNet, dataset: list, optimizer: Adam, scheduler: MultiStepLR, 
         for i, data in enumerate(training_loader, 0):
             state, policy, value = data
             state = state.float()
-            policy = policy.float()
             value = value.float()
             # Feed the NN
             state = np.expand_dims(state, 1)
