@@ -171,12 +171,12 @@ class AlphaLossFunction(torch.nn.Module):
         super(AlphaLossFunction, self).__init__()
 
     @staticmethod
-    def forward(y_value, value):
+    def forward(y_value: float, value: float):
         """
         Calculates the difference (value error) between the provided value estimates.
         :param y_value: value estimated by NN
         :param value: value from the training dataset
-        :return:
+        :return: value error
         """
         value_error = (value - y_value) ** 2
         return value_error
