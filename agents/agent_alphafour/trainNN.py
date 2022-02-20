@@ -4,6 +4,8 @@ import pickle
 import numpy as np
 import torch.cuda
 from from_root import from_root
+from torch.optim import Adam
+from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 from torch.nn.utils import clip_grad_norm_
@@ -12,6 +14,9 @@ from agents.agent_alphafour.NN import AlphaNet, AlphaLossFunction
 
 
 class BoardDataset(Dataset):
+    """
+    Dataset for the board, policies and values
+    """
     def __init__(self, dataset):  # dataset = np.array of (s, p, v)
         self.boards = [data[0] for data in dataset]
         self.policies = [data[1] for data in dataset]
@@ -24,7 +29,8 @@ class BoardDataset(Dataset):
         return np.int64(self.boards[idx]), self.policies[idx], self.values[idx]
 
 
-def load_nn(nn, iteration):
+def load_nn(nn: AlphaNet, iteration: int) -> int:
+    # TODO doc string and what is up with start epoch?
     nn_filename = from_root(
         f"agents/agent_alphafour/trained_NN/NN_iteration{iteration}.pth.tar"
     )
@@ -37,7 +43,8 @@ def load_nn(nn, iteration):
     return start_epoch
 
 
-def train(nn, dataset, optimizer, scheduler, num_of_epochs, iteration):
+def train(nn: AlphaNet, dataset: list, optimizer: Adam, scheduler: MultiStepLR, num_of_epochs: int, iteration: int):
+    # TODO doc string
     torch.manual_seed(0)
     # Turn on training mode
     nn.train()
@@ -79,7 +86,10 @@ def train(nn, dataset, optimizer, scheduler, num_of_epochs, iteration):
         )
 
 
-def train_nn(iteration, num_of_epochs, learning_rate=0.001):
+def train_nn(iteration: int, num_of_epochs: int, learning_rate: float = 0.001):
+    """
+    Loads nn of given iteration and starts training
+    """
     print("[TRAINING] Started training!")
     # Load saved data
     dataset = []

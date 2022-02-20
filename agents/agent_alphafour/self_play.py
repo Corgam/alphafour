@@ -5,21 +5,13 @@ import pickle
 import numpy as np
 
 from agents.agent_alphafour.mcts_with_NN import Connect4State, run_alpha_four, Node
-from agents.common import initialize_game_state, pretty_print_board, if_game_ended
-from agents.helpers import (
-    BoardPiece,
-    PLAYER1,
-    convert_number2print,
-    GameState,
-    get_rival_piece,
-)
+from agents.common import if_game_ended
+from agents.helpers import BoardPiece, GameState
 
 
-def calculatePolicy(node: Node):
+def calculate_policy(node: Node) -> np.ndarray:
     """
     Calculates policy
-    :param node:
-    :return:
     """
     sum_visits = 0
     policy = np.zeros([7], np.float32)
@@ -32,7 +24,10 @@ def calculatePolicy(node: Node):
     return policy
 
 
-def save_file(filename, dataset_finished: list, iteration):
+def save_file(filename: str, dataset_finished: list, iteration: int):
+    """
+    Saves finished dataset to file in agents/agent_alphafour/training_data/<iteration>/<filename>
+    """
     if not os.path.exists(
         f"agents/agent_alphafour/training_data/iteration{iteration}/"
     ):
@@ -45,13 +40,16 @@ def save_file(filename, dataset_finished: list, iteration):
 
 
 def mcts_self_play(
-    iteration,
+    iteration: int,
     board: np.ndarray,
     player: BoardPiece,
-    number_of_mcts_simulations,
+    number_of_mcts_simulations: int,
     number_of_games: int,
     start_iter: int,
 ):
+    """
+    Runs MCTS-based self play
+    """
     print("[MCTS] Started MCTS plays!")
     starting_state = Connect4State(board, player)
     for game in range(number_of_games):
@@ -63,20 +61,16 @@ def mcts_self_play(
         value = 0
         # Play the game
         while state.get_possible_moves() and if_game_ended(state.board) is False:
-            #  print(pretty_print_board(state.board))
             move, root_node = run_alpha_four(state, number_of_mcts_simulations, iteration)
-            policy = calculatePolicy(root_node)
+            policy = calculate_policy(root_node)
             dataset_not_finished.append([state.board.copy(), policy])
             # Make the move
-            #  print("Move: " + str(move) + "\n")
             state.move(move)
         # Check who won
         if state.get_reward(state.player_just_moved) == GameState.IS_WIN:
             value = 1
-            #  print("Player with symbol " + convert_number2print(state.player_just_moved) + " wins!")
         elif state.get_reward(state.player_just_moved) == GameState.IS_LOST:
             value = -1
-            #  print("Player with symbol " + convert_number2print(get_rival_piece(state.player_just_moved)) + " wins!")
         else:
             print("Draw!")
         # Save data

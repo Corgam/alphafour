@@ -119,10 +119,6 @@ class Node:
         https://cs.stackexchange.com/questions/113473/difference-between-ucb1-and-uct
         :return: child_with_biggest_UCB1
         """
-        # UCTs = [child.wins / child.visits + np.sqrt(2 * np.log(self.visits) / child.visits) for child in /
-        # self.children]
-        # TODO: Check if the calculations are right
-        # TODO: Maybe replace the first value?
         ucts = [
             child.wins / child.visits
             + np.sqrt(
@@ -198,9 +194,6 @@ def rollout(node, child_priorities):
             temp_priorities[i] = 0
     node.children_priorities = temp_priorities
     return node.state
-    # while not if_game_ended(state.board):
-    #     state.move(random.choice(state.get_possible_moves()))
-    # return state
 
 
 def backpropagate(node: Node, state: Connect4State, value_estimate):
@@ -211,7 +204,6 @@ def backpropagate(node: Node, state: Connect4State, value_estimate):
     :param state: current state
     """
     while node is not None:
-        # TODO: Check if the value is negative for correct player.
         if state.player_just_moved == PLAYER1:
             node.backpropagate(value_estimate)
         else:
@@ -219,10 +211,10 @@ def backpropagate(node: Node, state: Connect4State, value_estimate):
         node = node.parent
 
 
-def get_nn_outputs(NN: AlphaNet, node: Node):
+def get_nn_outputs(nn: AlphaNet, node: Node):
     """
 
-    :param NN:
+    :param nn:
     :param node:
     :return:
     """
@@ -234,7 +226,7 @@ def get_nn_outputs(NN: AlphaNet, node: Node):
     # Change the type of the tensor
     board = torch.from_numpy(board).float()
     # Get values from the NN
-    child_priorities, value_estimate = NN(board)
+    child_priorities, value_estimate = nn(board)
     # Unpack the values
     child_priorities = (
         child_priorities.detach().cpu().numpy()

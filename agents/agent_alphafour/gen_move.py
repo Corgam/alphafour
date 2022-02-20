@@ -10,6 +10,9 @@ from agents.helpers import SavedState, PlayerAction, BoardPiece
 def generate_move_alphafour(
     board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState]
 ) -> Tuple[PlayerAction, Optional[SavedState]]:
+    """
+    Generates move based on alpha four model
+    """
     root_state = Connect4State(board, player)
     file_path = from_root("chosen_iteration.pkl")
     with open(file_path, "rb") as f:
