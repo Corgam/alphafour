@@ -109,14 +109,11 @@ class AlphaNet(torch.nn.Module):
     Consists of one convolutional layer, followed by NUMBER_OF_RES_LAYERS residual layers and a fully connected layer
     at the end.
     """
-
     def __init__(self) -> None:
         super(AlphaNet, self).__init__()
         self.convLayer = ConvBlock()
         self.resLayers = [ResBlock(42, 42)] * NUMBER_OF_RES_LAYERS
         self.fullLayer = OutBlock()
-
-    # Parameters
 
     # Methods
     def forward(self, values):
@@ -128,6 +125,9 @@ class AlphaNet(torch.nn.Module):
 
 
 class AlphaLossFunction(torch.nn.Module):
+    """
+    Main loss function. Takes into account the difference between the value estimates.
+    """
     def __init__(self):
         super(AlphaLossFunction, self).__init__()
 

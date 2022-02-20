@@ -11,7 +11,11 @@ def generate_move_alphafour(
     board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState]
 ) -> Tuple[PlayerAction, Optional[SavedState]]:
     """
-    Generates move based on alpha four model
+    Generates move based on alpha four model.
+    :param board: the board to start the game with
+    :param player: player who will start first
+    :param saved_state: optional save state (not used)
+    :return: move to do, optional saved state
     """
     root_state = Connect4State(board, player)
     file_path = from_root("chosen_iteration.pkl")
