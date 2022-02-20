@@ -11,7 +11,9 @@ from agents.helpers import BoardPiece, GameState
 
 def calculate_policy(node: Node) -> np.ndarray:
     """
-    Calculates policy
+    Calculates the policy for a given node.
+    :param node: node for which the policy will be calculated
+    :return: the policy
     """
     sum_visits = 0
     policy = np.zeros([7], np.float32)
@@ -27,6 +29,9 @@ def calculate_policy(node: Node) -> np.ndarray:
 def save_file(filename: str, dataset_finished: list, iteration: int):
     """
     Saves finished dataset to file in agents/agent_alphafour/training_data/<iteration>/<filename>
+    :param filename: file name
+    :param dataset_finished: final dataset to save on the disk
+    :param iteration: current iteration of the main pipeline
     """
     if not os.path.exists(
         f"agents/agent_alphafour/training_data/iteration{iteration}/"
@@ -47,7 +52,13 @@ def mcts_self_play(
     number_of_games: int,
 ):
     """
-    Runs MCTS-based self play
+    Runs MCTS-based self play between two MCTS agents.
+    Saves generated data on the drive.
+    :param iteration: iteration of the main pipeline
+    :param board: the board to start game from
+    :param player: the next player to move
+    :param number_of_mcts_simulations: number of MCTS simulations
+    :param number_of_games: number of self play games to do
     """
     print("[MCTS] Started MCTS plays!")
     starting_state = Connect4State(board, player)
