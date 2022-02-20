@@ -36,7 +36,7 @@ class ResBlock(nn.Module):
     Input: Tensor computed in the convolutional block.
     Output: Tensor
     """
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels: int, out_channels: int):
         """
         Initializes the residual block.
         :param in_channels: number of input channels
@@ -72,7 +72,7 @@ class ResBlock(nn.Module):
         )
         self.bn3 = nn.BatchNorm2d(out_channels)
 
-    def forward(self, value):
+    def forward(self, value: torch.Tensor):
         """
         Forwards the given value through the residual block
         :param value: value to forward
@@ -113,7 +113,7 @@ class OutBlock(nn.Module):
         self.conv1 = nn.Conv2d(42, 1, (3, 3), stride=(1, 1))
         self.ln1 = nn.Linear(20, 1)
 
-    def forward(self, value):
+    def forward(self, value: torch.Tensor):
         """
         Forwards the given value through the output block.
         Calculates the final policy and value estimate.
@@ -147,7 +147,7 @@ class AlphaNet(torch.nn.Module):
         self.resLayers = [ResBlock(42, 42)] * NUMBER_OF_RES_LAYERS
         self.fullLayer = OutBlock()
 
-    def forward(self, board):
+    def forward(self, board: torch.Tensor):
         """
         Forwards the given value through the residual block
         :param board: the input board to run NN on
