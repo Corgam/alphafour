@@ -45,7 +45,6 @@ def mcts_self_play(
     player: BoardPiece,
     number_of_mcts_simulations: int,
     number_of_games: int,
-    start_iter: int,
 ):
     """
     Runs MCTS-based self play

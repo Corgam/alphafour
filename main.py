@@ -133,7 +133,6 @@ def main_pipeline():
             player=PLAYER1,
             number_of_mcts_simulations=NUMBER_OF_MCTS_SIMULATIONS,
             number_of_games=NUMBER_OF_MCTS_GAMES_PER_ITERATION,
-            start_iter=0,
         )
         # Train the NN with data from MCTS
         train_nn(iteration=iteration, num_of_epochs=NUMBER_OF_TRAINING_EPOCHS)
@@ -155,7 +154,6 @@ def main_pipeline():
                     number_of_games=NUMBER_OF_MCTS_GAMES_PER_ITERATION,
                     number_of_mcts_simulations=NUMBER_OF_MCTS_SIMULATIONS,
                     player=PLAYER1,
-                    start_iter=(additional_runs + 1) * NUMBER_OF_MCTS_GAMES_PER_ITERATION,
                 )
                 train_nn(iteration=iteration, num_of_epochs=NUMBER_OF_TRAINING_EPOCHS)
                 better_nn = evaluate_nn(

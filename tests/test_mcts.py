@@ -21,7 +21,3 @@ def test_MCTS():
     root_state = Connect4State(board, PLAYER1)
     move, root_node = run_alpha_four(root_state, 100)
     assert move == 4
-
-
-def test_MCTS_play():
-    mcts_self_play()

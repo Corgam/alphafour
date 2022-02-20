@@ -2,8 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from agents.common import string_to_board
-
 NUMBER_OF_RES_LAYERS = 11
 
 

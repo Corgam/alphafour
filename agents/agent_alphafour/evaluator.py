@@ -14,6 +14,8 @@ from agents.helpers import PLAYER1, GameState
 def save_file(filename: str, data: dict):
     """
     Saves `data` to file located at agents/agent_alphafour/evaluation_data/<filename>
+    :param filename: name of the file
+    :param data: data to save
     """
     if not os.path.exists(f"agents/agent_alphafour/evaluation_data/"):
         os.makedirs(f"agents/agent_alphafour/evaluation_data/")
@@ -25,6 +27,7 @@ def save_file(filename: str, data: dict):
 def load_file(filename: str) -> dict:
     """
     Returns data loaded from agents/agent_alphafour/evaluation_data/<filename> if available
+    :param filename: name of the file
     """
     if os.path.exists(f"agents/agent_alphafour/evaluation_data/"):
         full_path = os.path.join(f"agents/agent_alphafour/evaluation_data/", filename)
@@ -38,10 +41,21 @@ class Match:
     Match to be played while evaluating old vs new neural net
     """
     def __init__(self, current_nn: AlphaNet, best_nn: AlphaNet):
+        """
+        Initializes the match object.
+        :param current_nn: current rival NN
+        :param best_nn: previous best NN
+        """
         self.current_nn = current_nn
         self.best_nn = best_nn
 
     def play_round(self, iteration_number: int, number_of_mcts_simulations: int) -> Optional[str]:
+        """
+        Plays a round of MCTS.
+        :param iteration_number: the round of the total match
+        :param number_of_mcts_simulations: number of mcts simulations
+        :return: the NN which won
+        """
         starting_player = PLAYER1
         state = Connect4State(initialize_game_state(), starting_player)
         if iteration_number % 2 == 0:
@@ -54,7 +68,6 @@ class Match:
             second_player_nn = self.current_nn
             first_player = "best"
             second_player = "current"
-
         # Play the game
         while state.get_possible_moves() and if_game_ended(state.board) is False:
             #  print(pretty_print_board(state.board))
@@ -69,13 +82,14 @@ class Match:
             return first_player
         elif state.get_reward(starting_player) == GameState.IS_LOST:
             return second_player
-        else:
-            # Draw
+        else:  # Draw
             return None
 
     def solve(self, number_of_games: int, number_of_mcts_simulations: int):
         """
-        Runs games and stores win ratio in file
+        Runs N MCTS matches and stores the win ratio in file.
+        :param number_of_games: number of matches to play
+        :param number_of_mcts_simulations: number of mcts simulations
         """
         print(f"[EVALUATOR] Starting NN Match with {number_of_games} total rounds!")
         wins = 0
@@ -96,7 +110,12 @@ class Match:
 
 def evaluate_nn(best_nn_id: int, current_nn_id: int, number_of_games: int, number_of_mcts_simulations: int) -> int:
     """
-    Loads both the old and new neural nets and lets them play against each other to evaluate improvement
+    Loads both the old and new NNs and lets them play against each other to evaluate if the new NN improved or not.
+    :param best_nn_id: id of the currently the best NN
+    :param current_nn_id: id of the NN which will compete
+    :param number_of_games: number of matches to play
+    :param number_of_mcts_simulations: number of mcts simulations to do
+    :return: id of the won NN
     """
     print("[EVALUATOR] Started evaluating the NNs.")
     # Prepare filenames for NNs
