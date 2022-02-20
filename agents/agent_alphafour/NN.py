@@ -6,27 +6,42 @@ NUMBER_OF_RES_LAYERS = 11
 
 
 class ConvBlock(nn.Module):
-    """ Convolutional Block Performs initial convolution and batch normalization. Input: Connect 4 board
-     Output: Tensor"""
+    """
+    Convolutional Block Performs initial convolution and batch normalization.
+    Input: Connect 4 board
+    Output: Tensor
+    """
     def __init__(self):
+        """
+        Initializes the convolutional block.
+        """
         super(ConvBlock, self).__init__()
-
         self.bn = nn.BatchNorm2d(42)
         self.conv = nn.Conv2d(1, 42, kernel_size=(3, 3), stride=(1, 1), padding=1)
 
-    def forward(self, value):
-        # value = torch.from_numpy(value)
-        # value = value.type(torch.FloatTensor)
+    def forward(self, value: torch.Tensor):
+        """
+        Forwards the given value through the convolutional block
+        :param value: value to forward
+        :return: new value
+        """
         temp = self.conv(value)
         temp = self.bn(temp)
         return F.relu(temp)
 
 
 class ResBlock(nn.Module):
-    """Residual block. Performs 3 convolutions and 3 batch normalizations.
-    Input: Tensor computed in the convolutional block. Output: Tensor
+    """
+    Residual block. Performs 3 convolutions and 3 batch normalizations.
+    Input: Tensor computed in the convolutional block.
+    Output: Tensor
     """
     def __init__(self, in_channels, out_channels):
+        """
+        Initializes the residual block.
+        :param in_channels: number of input channels
+        :param out_channels: number of output channels
+        """
         super().__init__()
         self.in_channels, self.out_channels = in_channels, out_channels
         self.conv1 = nn.Conv2d(
@@ -58,6 +73,11 @@ class ResBlock(nn.Module):
         self.bn3 = nn.BatchNorm2d(out_channels)
 
     def forward(self, value):
+        """
+        Forwards the given value through the residual block
+        :param value: value to forward
+        :return: new value
+        """
         # Remember the value
         residual_value = value
         # First conv
@@ -83,6 +103,9 @@ class OutBlock(nn.Module):
     Returns policy vector (1 by 7) and value head (1 by 1).
     """
     def __init__(self):
+        """
+        Initializes the output block.
+        """
         super(OutBlock, self).__init__()
         self.conv = nn.Conv2d(42, 7, (3, 3), stride=(1, 1))
         self.ln = nn.Linear(140, 7)
@@ -91,6 +114,12 @@ class OutBlock(nn.Module):
         self.ln1 = nn.Linear(20, 1)
 
     def forward(self, value):
+        """
+        Forwards the given value through the output block.
+        Calculates the final policy and value estimate.
+        :param value: value to forward
+        :return: policy head, value head
+        """
         policy_head = self.conv(value)
         policy_head = policy_head.view(1, -1)
         policy_head = self.ln(policy_head)
@@ -110,18 +139,25 @@ class AlphaNet(torch.nn.Module):
     at the end.
     """
     def __init__(self) -> None:
+        """
+        Initializes the AlphaNet.
+        """
         super(AlphaNet, self).__init__()
         self.convLayer = ConvBlock()
         self.resLayers = [ResBlock(42, 42)] * NUMBER_OF_RES_LAYERS
         self.fullLayer = OutBlock()
 
-    # Methods
-    def forward(self, values):
-        values = self.convLayer(values)
+    def forward(self, board):
+        """
+        Forwards the given value through the residual block
+        :param board: the input board to run NN on
+        :return: values (consisting of: policy, value estimate)
+        """
+        value = self.convLayer(board)
         for res_layer in self.resLayers:
-            values = res_layer(values)
-        values = self.fullLayer(values)
-        return values
+            value = res_layer(value)
+        results = self.fullLayer(value)
+        return results
 
 
 class AlphaLossFunction(torch.nn.Module):
@@ -129,9 +165,18 @@ class AlphaLossFunction(torch.nn.Module):
     Main loss function. Takes into account the difference between the value estimates.
     """
     def __init__(self):
+        """
+        Initializes the Loss function.
+        """
         super(AlphaLossFunction, self).__init__()
 
     @staticmethod
     def forward(y_value, value):
+        """
+        Calculates the difference (value error) between the provided value estimates.
+        :param y_value: value estimated by NN
+        :param value: value from the training dataset
+        :return:
+        """
         value_error = (value - y_value) ** 2
         return value_error
