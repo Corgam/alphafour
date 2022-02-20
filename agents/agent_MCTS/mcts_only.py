@@ -26,11 +26,8 @@ class Connect4StateMCTS:
     Class for state of the connect four game.
     Holds information about the board and the last player who played.
     """
-
-    def __init__(self, board=initialize_game_state(), player=PLAYER1):
-        self.player_just_moved: BoardPiece = get_rival_piece(
-            player
-        )  # Player who moved last.
+    def __init__(self, board: np.ndarray = initialize_game_state(), player: BoardPiece = PLAYER1):
+        self.player_just_moved: BoardPiece = get_rival_piece(player)  # Player who moved last.
         self.board: np.ndarray = board  # The board itself
 
     def copy(self) -> Connect4StateMCTS:
@@ -66,7 +63,7 @@ class Connect4StateMCTS:
         """
         return check_end_state(self.board, player)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         String representation of the Connect 4 State
         :return:
@@ -80,7 +77,6 @@ class NodeMCTS:
     the state , move of the parent, parent node, list of child nodes, number of wins,
     number of visits, list of untried moves and which player just moved.
     """
-
     def __init__(
         self,
         state: Connect4StateMCTS = None,
@@ -88,14 +84,14 @@ class NodeMCTS:
         parent: NodeMCTS = None,
     ):
         self.parent_move: PlayerAction = parent_move  # Move which the parent carried out
-        self.parent = parent  # Node of the parent. None if self is a root node.
+        self.parent: NodeMCTS = parent  # Node of the parent. None if self is a root node.
         self.children: List[NodeMCTS] = []  # Set of all possible children
         self.visits: int = 0  # How many times this node has been visited
         self.wins: int = 0  # How many times this node has won
         self.untried_moves: list[
             PlayerAction
         ] = state.get_possible_moves()  # List of all moves possible from that node.
-        self.player_just_moved = state.player_just_moved  # Player number who just moved
+        self.player_just_moved: BoardPiece = state.player_just_moved  # Player number who just moved
 
     def add_child(self, move: PlayerAction, state: Connect4StateMCTS) -> NodeMCTS:
         """
@@ -158,7 +154,7 @@ def expand_mcts(node: NodeMCTS, state: Connect4StateMCTS):
     return node, state
 
 
-def rollout_mcts(state: Connect4StateMCTS):
+def rollout_mcts(state: Connect4StateMCTS) -> Connect4StateMCTS:
     """
     Rollouts the state, until the game is ended.
     :param state: current state
@@ -180,9 +176,7 @@ def backpropagate_mcts(node: NodeMCTS, state: Connect4StateMCTS):
         node = node.parent
 
 
-def run_basic_mcts(
-    root_state: Connect4StateMCTS, simulation_no=100
-) -> (PlayerAction, NodeMCTS):
+def run_basic_mcts(root_state: Connect4StateMCTS, simulation_no: int = 100) -> (PlayerAction, NodeMCTS):
     """
     Runs MCTS simulation for a given root state n times.
     :param simulation_no: number of simulations to do
