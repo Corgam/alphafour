@@ -1,8 +1,5 @@
 # Additional
 .idea
-agents/agent_alphafour/training_data/*
-agents/agent_alphafour/trained_NN/*
-agents/agent_alphafour/evaluation_data/*
 chosen_iteration.pkl
 
 # Byte-compiled / optimized / DLL files
