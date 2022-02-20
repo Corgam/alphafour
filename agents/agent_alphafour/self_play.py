@@ -48,7 +48,7 @@ def mcts_self_play(
     iteration,
     board: np.ndarray,
     player: BoardPiece,
-    number_of_simulations,
+    number_of_mcts_simulations,
     number_of_games: int,
     start_iter: int,
 ):
@@ -64,7 +64,7 @@ def mcts_self_play(
         # Play the game
         while state.get_possible_moves() and if_game_ended(state.board) is False:
             #  print(pretty_print_board(state.board))
-            move, root_node = run_alpha_four(state, number_of_simulations, iteration)
+            move, root_node = run_alpha_four(state, number_of_mcts_simulations, iteration)
             policy = calculatePolicy(root_node)
             dataset_not_finished.append([state.board.copy(), policy])
             # Make the move

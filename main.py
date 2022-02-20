@@ -17,7 +17,7 @@ from agents.agent_alphafour import generate_move_alphafour
 
 # Read the keyboard input for user move
 def user_move(
-    board: np.ndarray, _player: BoardPiece, saved_state: Optional[SavedState]
+        board: np.ndarray, _player: BoardPiece, saved_state: Optional[SavedState]
 ):
     action = PlayerAction(-1)
     while not 0 <= action < board.shape[1]:
@@ -31,14 +31,14 @@ def user_move(
 
 
 def human_vs_agent(
-    generate_move_1: GenMove,  # First player - provided in the function
-    generate_move_2: GenMove = user_move,  # Second player - always human
-    player_1: str = "Player 1",  # Name of the first player
-    player_2: str = "Player 2",  # Name of the second player
-    args_1: tuple = (),
-    args_2: tuple = (),
-    init_1: Callable = lambda board, player: None,  # Initialization function for the first game
-    init_2: Callable = lambda board, player: None,  # Initialization function for the second game
+        generate_move_1: GenMove,  # First player - provided in the function
+        generate_move_2: GenMove = user_move,  # Second player - always human
+        player_1: str = "Player 1",  # Name of the first player
+        player_2: str = "Player 2",  # Name of the second player
+        args_1: tuple = (),
+        args_2: tuple = (),
+        init_1: Callable = lambda board, player: None,  # Initialization function for the first game
+        init_2: Callable = lambda board, player: None,  # Initialization function for the second game
 ):
     import time
     from agents.helpers import PLAYER1, PLAYER2, PLAYER1_PRINT, PLAYER2_PRINT, GameState
@@ -69,7 +69,7 @@ def human_vs_agent(
         while playing:
             # For both players make a move, one after other, starting with first one.
             for player, player_name, gen_move, args in zip(
-                players, player_names, gen_moves, gen_args,
+                    players, player_names, gen_moves, gen_args,
             ):
                 # Save initial time
                 t0 = time.time()
@@ -131,7 +131,7 @@ def main_pipeline():
             iteration=iteration,
             board=initialize_game_state(),
             player=PLAYER1,
-            number_of_simulations=NUMBER_OF_MCTS_SIMULATIONS,
+            number_of_mcts_simulations=NUMBER_OF_MCTS_SIMULATIONS,
             number_of_games=NUMBER_OF_MCTS_GAMES_PER_ITERATION,
             start_iter=0,
         )
@@ -140,7 +140,8 @@ def main_pipeline():
         # Starting from second iteration, evaluate the NNs and choose the better one.
         if iteration > 0:
             better_nn = evaluate_nn(
-                iteration, iteration + 1, number_of_games=NUMBER_OF_GAMES_PER_EVALUATION
+                iteration, iteration + 1, number_of_games=NUMBER_OF_GAMES_PER_EVALUATION,
+                number_of_mcts_simulations=NUMBER_OF_MCTS_SIMULATIONS
             )
             additional_runs = 0
             # If the new NN is not good enough, train it more until it is.
@@ -152,16 +153,16 @@ def main_pipeline():
                     iteration=iteration,
                     board=initialize_game_state(),
                     number_of_games=NUMBER_OF_MCTS_GAMES_PER_ITERATION,
-                    number_of_simulations=NUMBER_OF_MCTS_SIMULATIONS,
+                    number_of_mcts_simulations=NUMBER_OF_MCTS_SIMULATIONS,
                     player=PLAYER1,
-                    start_iter=(additional_runs + 1)
-                    * NUMBER_OF_MCTS_GAMES_PER_ITERATION,
+                    start_iter=(additional_runs + 1) * NUMBER_OF_MCTS_GAMES_PER_ITERATION,
                 )
                 train_nn(iteration=iteration, num_of_epochs=NUMBER_OF_TRAINING_EPOCHS)
                 better_nn = evaluate_nn(
                     iteration,
                     iteration + 1,
                     number_of_games=NUMBER_OF_GAMES_PER_EVALUATION,
+                    number_of_mcts_simulations=NUMBER_OF_MCTS_SIMULATIONS
                 )
                 additional_runs += 1
 
@@ -188,7 +189,7 @@ if __name__ == "__main__":
         it = input("Chosen iteration:")
         filePath = from_root("chosen_iteration.pkl")
         with open(filePath, "wb") as f:
-            pickle.dump({"iteration": it}, f)
+            pickle.dump({"iteration": it, "number_of_mcts_simulations": NUMBER_OF_MCTS_SIMULATIONS}, f)
         human_vs_agent(generate_move_alphafour)
     elif agent == "4":
         human_vs_agent(generate_move_mcts)

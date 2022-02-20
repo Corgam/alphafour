@@ -14,5 +14,5 @@ def generate_move_alphafour(
     file_path = from_root("chosen_iteration.pkl")
     with open(file_path, "rb") as f:
         iteration = pickle.load(f)
-    move, root_node = run_alpha_four(root_state, 100, iteration["iteration"])
+    move, root_node = run_alpha_four(root_state, iteration["number_of_mcts_simulations"], iteration["iteration"])
     return move, saved_state
