@@ -2,7 +2,7 @@ import os
 import pickle
 
 import numpy as np
-import torch.cuda
+import torch
 from from_root import from_root
 from torch.optim import Adam
 from torch.optim.lr_scheduler import MultiStepLR
