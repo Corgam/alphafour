@@ -16,7 +16,7 @@ Here we will describe briefly how the main pipeline works. More information can 
 ## Setup
 1. Install all requirements listed in the `requirements.txt` using your favourite package installer (For Pip use: ` pip install -r requirements.txt
 `)
-2. Install `PyTorch` (https://pytorch.org/get-started/locally/)
+2. Install `PyTorch 1.10.2` (https://pytorch.org/get-started/locally/)
 2. Run the `main.py` Python script and select the agent you want to play with.
 - For running the AlphaFour training type `1`. 
 - For Human vs Human match type `2`.
