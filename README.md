@@ -25,4 +25,5 @@ Here we will describe briefly how the main pipeline works. More information can 
 
 ## Additional Notes
 - `common.py` and `helpers.py` files were taken from Emil Balitzki's minmax agent submission (with the possibility of changes present)
+- For the docstrings we have used the `reStructuredText` docstrings type, which is automatically supported by the PyCharm (Source: https://www.jetbrains.com/help/pycharm/creating-documentation-comments.html#77db5105).
 - All parameters for the main pipeline can be changed manually inside of the `main.py` file, above the `main_pipeline` function.
