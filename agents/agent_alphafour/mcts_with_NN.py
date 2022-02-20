@@ -29,11 +29,8 @@ class Connect4State:
     Class for state of the connect four game.
     Holds information about the board and the last player who played.
     """
-
     def __init__(self, board=initialize_game_state(), player=PLAYER1):
-        self.player_just_moved: BoardPiece = get_rival_piece(
-            player
-        )  # Player who moved last.
+        self.player_just_moved: BoardPiece = get_rival_piece(player)  # Player who moved last.
         self.board: np.ndarray = board  # The board itself
 
     def copy(self) -> Connect4State:
@@ -50,7 +47,6 @@ class Connect4State:
         """
         Makes a specified move on the board. Player which move will be made is a rival of self.playerJustMoved
         :param move: move to do
-        :return:
         """
         apply_player_action(self.board, move, get_rival_piece(self.player_just_moved))
         self.player_just_moved = get_rival_piece(self.player_just_moved)
@@ -65,11 +61,11 @@ class Connect4State:
     def get_reward(self, player: BoardPiece) -> GameState:
         """
         Returns a GameState object, symbolizing if given player has won or not.
-        :return:
+        :return: end_game_state
         """
         return check_end_state(self.board, player)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         String representation of the Connect 4 State
         :return:
@@ -83,7 +79,6 @@ class Node:
     the state , move of the parent, parent node, list of child nodes, number of wins,
     number of visits, list of untried moves and which player just moved.
     """
-
     def __init__(
         self,
         state: Connect4State = None,
@@ -91,15 +86,13 @@ class Node:
         parent: Node = None,
     ):
         self.parent_move: PlayerAction = parent_move  # Move which the parent carried out
-        self.parent = parent  # Node of the parent. None if self is a root node.
+        self.parent: Node = parent  # Node of the parent. None if self is a root node.
         self.children: List[Node] = []  # Set of all possible children
         self.visits: int = 0  # How many times this node has been visited
-        self.wins: int = 0  # How many times this node has won
-        self.untried_moves: list[
-            PlayerAction
-        ] = state.get_possible_moves()  # List of all moves possible from that node.
-        self.state = state
-        self.children_priorities = np.zeros([7], np.float32)
+        self.wins: float = 0  # How many times this node has won
+        self.untried_moves: list[PlayerAction] = state.get_possible_moves()  # List of all moves possible
+        self.state: Connect4State = state
+        self.children_priorities: np.ndarray = np.zeros([7], np.float32)
 
     def add_child(self, move: PlayerAction, state: Connect4State) -> Node:
         """
@@ -133,19 +126,20 @@ class Node:
         ]
         return self.children[np.argmax(ucts)]
 
-    def backpropagate(self, result: GameState):
+    def backpropagate(self, result: float):
         """
         Used for backpropagation. Updates the number of visits and wins.
-        :param result: the GameState to backpropagate
+        :param result: the value to backpropagate
         """
         self.visits += 1
-        if result == GameState.IS_WIN:
-            self.wins += 1
+        self.wins += result
 
 
 def select_node(node: Node, state: Connect4State):
     """
     Selects the node for expansion.
+    NOTE: This function rises Duplicated Code warning, but because we do not want to mix both agents (pure MCTS and
+    AlphaFour) we leave this warning out.
     :param state: current state
     :param node: current node
     :return: selected_node, new_state
@@ -158,7 +152,7 @@ def select_node(node: Node, state: Connect4State):
 
 def expand(node: Node, state: Connect4State):
     """
-    Expands the given node
+    Expands the given node.
     :param node: node_to_expand
     :param state: current state
     :return: child_node, new_state
@@ -170,11 +164,11 @@ def expand(node: Node, state: Connect4State):
     return node, state
 
 
-def rollout(node, child_priorities):
+def rollout(node: Node, child_priorities: np.ndarray):
     """
     Rollouts the state, until the game is ended.
-    :param child_priorities:
-    :param node:
+    :param child_priorities: the priorities of children taken from NN
+    :param node: starting node
     :return: state_after_rollout
     """
     moves = node.untried_moves
@@ -196,10 +190,10 @@ def rollout(node, child_priorities):
     return node.state
 
 
-def backpropagate(node: Node, state: Connect4State, value_estimate):
+def backpropagate(node: Node, state: Connect4State, value_estimate: float):
     """
     Backpropagates the value up the tree
-    :param value_estimate:
+    :param value_estimate: the value estimate taken from NN
     :param node: node to start backpropagation from
     :param state: current state
     """
@@ -213,10 +207,11 @@ def backpropagate(node: Node, state: Connect4State, value_estimate):
 
 def get_nn_outputs(nn: AlphaNet, node: Node):
     """
-
-    :param nn:
-    :param node:
-    :return:
+    Gets the predicted value estimate and the child priorities from the NN.
+    Make sures the board is transformed into right dimensions for NN to accept it.
+    :param nn: the Neural Network which will give back the estimates.
+    :param node: the node containing board state
+    :return: child_priorities, value_estimate
     """
     # Prepare the board
     board = node.state.board
@@ -230,15 +225,13 @@ def get_nn_outputs(nn: AlphaNet, node: Node):
     # Unpack the values
     child_priorities = (
         child_priorities.detach().cpu().numpy()
-    )  # Change to numpy ndarray
+    )  # Change to numpy array
     child_priorities = child_priorities.reshape(-1)  # Delete one dimension
     value_estimate = value_estimate.item()
     return child_priorities, value_estimate
 
 
-def run_single_mcts(
-    root_state: Connect4State, simulation_no: int, nn: AlphaNet
-) -> (PlayerAction, Node):
+def run_single_mcts(root_state: Connect4State, simulation_no: int, nn: AlphaNet) -> (PlayerAction, Node):
     """
     Runs MCTS simulation for a given root state n times.
     :param simulation_no: number of simulations to do
@@ -267,7 +260,7 @@ def run_single_mcts(
     return root_node.children[np.argmax(children_visits)].parent_move, root_node
 
 
-def run_alpha_four(root_state: Connect4State, simulation_no, nn_iteration):
+def run_alpha_four(root_state: Connect4State, simulation_no: int, nn_iteration: int):
     # Create the NN
     nn = AlphaNet()
     nn.eval()  # Turn on the evaluation mode
@@ -278,13 +271,8 @@ def run_alpha_four(root_state: Connect4State, simulation_no, nn_iteration):
     if os.path.isfile(nn_filename):
         loaded_nn = torch.load(nn_filename)
         nn.load_state_dict(loaded_nn["state_dict"])
-        #  print(f"Loaded {NN_filename} neural network.")
     else:
         torch.save({"state_dict": nn.state_dict()}, nn_filename)
-        #  print(f"Created new {NN_filename} neural network.")
-    # Turn on CUDA
-    # device = torch.device('cuda')if torch.cuda.is_available() else torch.device('cpu')
-    # NN.to(device)
     with torch.no_grad():
         move, root_node = run_single_mcts(root_state, simulation_no, nn)
     return move, root_node
